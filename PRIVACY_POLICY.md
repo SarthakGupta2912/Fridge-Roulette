@@ -73,8 +73,10 @@ The release app declares these Android permissions:
 - **INTERNET** - used only to download the AI recipe model.
 - **ACCESS_NETWORK_STATE** - lets the downloader notice when the connection is lost.
 - **WAKE_LOCK** - lets the phone keep working while the one-time download finishes.
+- **FOREGROUND_SERVICE** and **FOREGROUND_SERVICE_DATA_SYNC** - keep the one-time model download alive if the child leaves the app.
+- **POST_NOTIFICATIONS** - shows a local progress notification for that download on Android 13 and newer. Denying it does not stop the download.
 
-It does not ask for camera, location, storage, microphone, notifications, or foreground-service access. The app also declares a private Android permission that the AndroidX library uses to protect its own broadcast receivers; it does not give access to user data.
+It does not ask for camera, location, storage, or microphone access. The app also declares a private Android permission that the AndroidX library uses to protect its own broadcast receivers; it does not give access to user data.
 
 ## Third-party components
 

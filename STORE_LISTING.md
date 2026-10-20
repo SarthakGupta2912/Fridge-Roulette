@@ -113,7 +113,7 @@ Screenshot captions to use in the listing:
 
 **Data Safety text to use:** “No personal data is collected. Internet is used only once to download the AI recipe model.”
 
-The release manifest asks for `INTERNET`, `ACCESS_NETWORK_STATE`, and `WAKE_LOCK` for the one-time model download. It does not ask for camera, location, storage, microphone, notification, or foreground-service permission. The app also declares a private Android permission that AndroidX uses to protect its own broadcast receivers.
+The release manifest asks for `INTERNET`, `ACCESS_NETWORK_STATE`, and `WAKE_LOCK` for the one-time model download. It also asks for `FOREGROUND_SERVICE`, `FOREGROUND_SERVICE_DATA_SYNC`, and `POST_NOTIFICATIONS` only to keep that download alive and show its progress notification. It does not ask for camera, location, storage, or microphone permission. The app also declares a private Android permission that AndroidX uses to protect its own broadcast receivers.
 
 ## Content rating questionnaire notes
 
