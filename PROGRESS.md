@@ -61,7 +61,7 @@ This file is my checklist. I update it after every phase.
 - [x] Release AAB built
 - [x] Merged manifest checked
 - [x] README, RELEASE, STORE_LISTING and PRIVACY_POLICY docs
-- [ ] All work committed and pushed
+- [x] All work committed and pushed
 
 ## Current status
 
@@ -98,4 +98,3 @@ This file is my checklist. I update it after every phase.
 - [ ] Host PRIVACY_POLICY.md and replace the contact email placeholder.
 - [ ] Complete Play Console data safety, content rating, and Families declarations.
 - [ ] Upload the AAB to internal testing, then production.
-- [ ] Push the final commits to GitHub.
