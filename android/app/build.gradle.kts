@@ -63,6 +63,24 @@ android {
             )
         }
     }
+
+    packaging {
+        jniLibs {
+            // Compress the native libraries in the APK. Android extracts them
+            // once at install time. This cuts the download size roughly in half
+            // without removing any device support.
+            useLegacyPackaging = true
+
+            // The MediaPipe image generator is not used: the app only runs the
+            // text recipe model and the YOLO food detector. Its three native
+            // libraries are large and would otherwise be shipped for nothing.
+            excludes += setOf(
+                "lib/**/libimagegenerator_gpu.so",
+                "lib/**/libmediapipe_tasks_vision_jni.so",
+                "lib/**/libmediapipe_tasks_vision_image_generator_jni.so",
+            )
+        }
+    }
 }
 
 kotlin {

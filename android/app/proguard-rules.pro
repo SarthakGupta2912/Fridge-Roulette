@@ -30,6 +30,14 @@
 -keep class org.yaml.snakeyaml.** { *; }
 -dontwarn org.yaml.snakeyaml.**
 
+# Fridge Roulette bundles only ML Kit's Latin text model. The OCR plugin also
+# mentions the Chinese, Devanagari, Japanese and Korean options, but those
+# classes are not part of this build, so R8 should not look for them.
+-dontwarn com.google.mlkit.vision.text.chinese.**
+-dontwarn com.google.mlkit.vision.text.devanagari.**
+-dontwarn com.google.mlkit.vision.text.japanese.**
+-dontwarn com.google.mlkit.vision.text.korean.**
+
 # Every JNI entry point must keep its name.
 -keepclasseswithmembernames class * {
     native <methods>;
