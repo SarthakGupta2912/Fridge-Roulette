@@ -59,7 +59,7 @@ flutter analyze
 flutter test
 ```
 
-Expected: no formatting changes, no analyzer issues, 23 passing tests.
+Expected: no formatting changes, no analyzer issues, 25 passing tests.
 
 ## 4. Build the artifacts
 
@@ -76,20 +76,21 @@ Outputs:
 | Artifact | Path | Size (v1.0.0) |
 | --- | --- | --- |
 | Debug APK | `build\app\outputs\flutter-apk\app-debug.apk` | 203.52 MB |
-| Release APK (universal) | `build\app\outputs\flutter-apk\app-release.apk` | 74.54 MB |
-| Release AAB | `build\app\outputs\bundle\release\app-release.aab` | 64.42 MB |
+| Release APK (universal) | `build\app\outputs\flutter-apk\app-release.apk` | 74.59 MB |
+| Release AAB | `build\app\outputs\bundle\release\app-release.aab` | 64.52 MB |
 
 The debug APK is large because it contains every ABI and no shrinking. Use the universal release APK for direct installs and the AAB for Play.
 
 SHA-256 checksums for this build:
 
 ```text
-app-release.apk  4328BFD356FD1B5A1143AC0A5C52A6BDD33B73D66408AE3CC864127E169FD2DB
-app-release.aab  4F95C3738DC1BC6DC2DF5743DA557B363C7B0B8FB6B0E40FF8A06AB04F0B83EB
+app-release.apk  BB89EE4613C1A46497F6422BD17B8A3CF2CE0F88A85CB407D512F369C102DED0
+app-release.aab  A1FF912B889E3CB6C86BB00621873095A582E480B4BCB0CC7C331D89EDA4056C
 ```
 
-If you rebuild, the checksums change. Recompute with:
+Verified on 20 Oct 2026 on a Samsung Galaxy Tab S6 Lite (SM-T865, Android 12) over wireless ADB: the release APK installs and launches, the model loads, a banana photo is detected and boxed, add-food, the roulette spin, "Banana Shake" and the recipe screen work, and landscape plus 1.5x text render correctly.
 
+If you rebuild, the checksums change. Recompute with:
 ```powershell
 Get-FileHash build\app\outputs\flutter-apk\app-release.apk -Algorithm SHA256
 Get-FileHash build\app\outputs\bundle\release\app-release.aab -Algorithm SHA256
@@ -130,6 +131,10 @@ Keep this digest. Play App Signing will show a different app-signing certificate
 Expected: only `com.sarthakgupta.fridgeroulette.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION`. There must be **no** `INTERNET`, `CAMERA`, `ACCESS_NETWORK_STATE`, `WAKE_LOCK`, `FOREGROUND_SERVICE*`, or `RECEIVE_BOOT_COMPLETED`.
 
 The manifest uses `tools:node="remove"` for permissions that library dependencies add. The debug and profile manifests still add `INTERNET` so Flutter's hot-reload connection works; that is normal and does not affect the release build.
+
+### R8 keep rules
+
+LiteRT 2.x pulls in Play Asset Delivery, which pulls in WorkManager. WorkManager opens its Room database by name at startup, so `android/app/proguard-rules.pro` keeps `androidx.work.impl.WorkDatabase*`. Without those rules, the release build crashes on launch while the debug build works, with `Failed to create an instance of ...WorkDatabase`. Re-test the release APK whenever dependencies or ProGuard rules change.
 
 ### Package details
 

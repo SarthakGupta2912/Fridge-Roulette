@@ -76,7 +76,7 @@ flutter analyze
 flutter test
 ```
 
-The test suite has 23 tests:
+The test suite has 25 tests:
 
 - recipe count, unique ids, valid ingredient ids;
 - recipe eligibility and missing-food rules;
@@ -146,7 +146,7 @@ All visible text belongs in `lib/strings.dart`.
 - The bundled model is trained on COCO classes, so it cannot see every fridge item. The hand-add grid is the main fallback.
 - Detection works best with good light and an open fridge door. Boxes show only the first box for each food.
 - Dark, clear bottles, and some packages may be missed or labeled "Juice or Drink".
-- Model inference and release APK size have not been checked on a physical phone in this development environment. Test on at least one low-end and one high-end device before publishing.
+- Verified on a Samsung Galaxy Tab S6 Lite (Android 12): release launch, on-device detection, the food list, roulette, recipe, landscape, and 1.5x text. Test on at least one low-end and one high-end phone before publishing.
 - The release build currently contains native libraries for all Android ABIs, so the universal APK is large (about 75 MB). The AAB is about 64 MB and Play delivers only the needed pieces.
 - The Ultralytics plugin still applies the Kotlin Gradle Plugin, so Flutter prints a future-compatibility warning at build time. Watch the plugin for an update.
 - The recipe set is entertainment, not medical or allergy advice. Always check ingredients for allergies.

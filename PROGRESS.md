@@ -61,6 +61,7 @@ This file is my checklist. I update it after every phase.
 - [x] Release AAB built
 - [x] Merged manifest checked
 - [x] README, RELEASE, STORE_LISTING and PRIVACY_POLICY docs
+- [x] Release APK installed and smoke tested on a real device
 - [x] All work committed and pushed
 
 ## Current status
@@ -71,10 +72,11 @@ This file is my checklist. I update it after every phase.
 | Analyze | No issues |
 | Tests | 25 passed |
 | Debug APK | `build/app/outputs/flutter-apk/app-debug.apk` (203.52 MB) |
-| Release APK | `build/app/outputs/flutter-apk/app-release.apk` (74.54 MB) |
-| Release AAB | `build/app/outputs/bundle/release/app-release.aab` (64.42 MB) |
+| Release APK | `build/app/outputs/flutter-apk/app-release.apk` (74.59 MB) |
+| Release AAB | `build/app/outputs/bundle/release/app-release.aab` (64.52 MB) |
 | Release permissions | No INTERNET, CAMERA, network state, or background permissions |
 | Release signer | Local upload key, CN=Fridge Roulette |
+| Device check | Samsung SM-T865, Android 12: launch, detection, spin, recipe, landscape, 1.5x text |
 
 ## Decisions I made along the way
 
