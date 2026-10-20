@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:typed_data';
 
@@ -132,6 +133,25 @@ class BrokenDetector extends DetectorService {
   Future<void> loadModel() async {
     status = DetectorStatus.failed;
     notifyListeners();
+  }
+}
+
+/// A food finder that keeps scanning until the test finishes it, so the
+/// progress overlay can be checked without a real model.
+class SlowDetector extends DetectorService {
+  SlowDetector() {
+    status = DetectorStatus.ready;
+  }
+
+  final Completer<DetectionResult> _result = Completer<DetectionResult>();
+
+  @override
+  Future<DetectionResult> detectFoods(Uint8List imageBytes) => _result.future;
+
+  void finish() {
+    if (!_result.isCompleted) {
+      _result.complete(const DetectionResult(<FoodDetection>[]));
+    }
   }
 }
 
@@ -395,6 +415,36 @@ void main() {
       expect(find.text(AppStrings.noFoodTitle), findsOneWidget);
       expect(find.text(AppStrings.addFoodByHand), findsOneWidget);
       expectNoLayoutError(tester);
+    });
+
+    testWidgets('slow scan shows a full-page progress card with Stop', (
+      WidgetTester tester,
+    ) async {
+      final SlowDetector detector = SlowDetector();
+      await pumpScreen(
+        tester,
+        CheckFoodScreen(
+          detector: detector,
+          chefBrain: readyBrain(),
+          generator: FakeRecipeGenerator(),
+          photoBytes: testPhoto,
+        ),
+        size: const Size(640, 360),
+        textScale: 1.5,
+      );
+      await tester.pump();
+      await tester.pump();
+
+      expect(find.text(AppStrings.lookingForFood), findsOneWidget);
+      expect(find.text(AppStrings.detectingHint), findsOneWidget);
+      expect(find.text(AppStrings.stopLooking), findsOneWidget);
+      expect(find.byType(LinearProgressIndicator), findsOneWidget);
+      expectNoLayoutError(tester);
+
+      detector.finish();
+      await tester.pumpAndSettle();
+      expect(find.text(AppStrings.stopLooking), findsNothing);
+      expect(find.text(AppStrings.noFoodTitle), findsOneWidget);
     });
 
     testWidgets('spins to the roulette screen', (WidgetTester tester) async {

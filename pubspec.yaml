@@ -20,6 +20,7 @@ dependencies:
   # offline. The MediaPipe engine keeps Android 7 (minSdk 24) support.
   flutter_edge_ai: ^2.4.1
   flutter_edge_ai_mediapipe: ^1.2.2
+  google_mlkit_text_recognition: 0.17.1
 dev_dependencies:
   flutter_test:
     sdk: flutter
@@ -29,5 +30,9 @@ flutter:
   uses-material-design: true
 
   assets:
-    # A small COCO-trained nano YOLO model (about 3 MB), bundled in the app.
+    # Two small YOLO models are bundled so the app never downloads a detector:
+    # - COCO nano detector (about 3 MB) for common foods like bananas and apples.
+    # - FoodSeg103 nano segmenter (about 14 MB) for milk, eggs, bread, meat,
+    #   vegetables and many more foods.
     - assets/models/food_detector.tflite
+    - assets/models/food_detector_foodseg.tflite

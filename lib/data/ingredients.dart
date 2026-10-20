@@ -12,14 +12,15 @@ class Ingredient {
   final String name;
   final String emoji;
 
-  /// The name YOLO uses for this food. Null for foods we only add by hand.
+  /// The name the COCO detector uses for this food.
+  /// Null for foods we only add by hand or find with the food segmenter.
   final String? cocoName;
 
   /// Safe to eat raw in a simple snack plate. Used by the mix-and-match fallback.
   final bool isSnackSafe;
 }
 
-/// Foods the model can find, plus foods a child can add by hand.
+/// Foods the models can find, plus foods a child can add by hand.
 const List<Ingredient> allIngredients = [
   Ingredient('banana', 'Banana', '🍌', cocoName: 'banana', isSnackSafe: true),
   Ingredient('apple', 'Apple', '🍎', cocoName: 'apple', isSnackSafe: true),
@@ -72,7 +73,7 @@ const List<Ingredient> allIngredients = [
   Ingredient('cucumber', 'Cucumber', '🥒', isSnackSafe: true),
   Ingredient('pasta', 'Pasta', '🍝'),
   Ingredient('corn', 'Corn', '🌽'),
-  Ingredient('peas', 'Peas', '🫛'),
+  Ingredient('peas', 'Peas', '🫛', isSnackSafe: true),
   Ingredient('spinach', 'Spinach', '🍃', isSnackSafe: true),
   Ingredient('mushroom', 'Mushroom', '🍄'),
   Ingredient('bell_pepper', 'Bell Pepper', '🫑', isSnackSafe: true),
@@ -93,9 +94,66 @@ const List<Ingredient> allIngredients = [
   Ingredient('peanut_butter', 'Peanut Butter', '🥜', isSnackSafe: true),
   Ingredient('beans', 'Beans', '🫘'),
   Ingredient('soup', 'Soup', '🍲'),
+
+  // More foods the FoodSeg103 model can see. Keeping them separate gives the
+  // recipe writer better ideas than a giant "vegetable" bucket.
+  Ingredient('meat', 'Meat', '🥩'),
+  Ingredient('sausage', 'Sausage', '🥓'),
+  Ingredient('seafood', 'Seafood', '🦀'),
+  Ingredient('shrimp', 'Shrimp', '🍤'),
+  Ingredient('tofu', 'Tofu', '⬜'),
+  Ingredient('eggplant', 'Eggplant', '🍆'),
+  Ingredient('cauliflower', 'Cauliflower', '🥦', isSnackSafe: true),
+  Ingredient('ginger', 'Ginger', '🫚'),
+  Ingredient('okra', 'Okra', '🌿'),
+  Ingredient('pumpkin', 'Pumpkin', '🎃'),
+  Ingredient('radish', 'Radish', '🌱', isSnackSafe: true),
+  Ingredient('asparagus', 'Asparagus', '🌿'),
+  Ingredient('bamboo_shoots', 'Bamboo Shoots', '🎋'),
+  Ingredient('celery', 'Celery', '🌿', isSnackSafe: true),
+  Ingredient('herbs', 'Fresh Herbs', '🌿', isSnackSafe: true),
+  Ingredient('bean_sprouts', 'Bean Sprouts', '🌱'),
+  Ingredient('seaweed', 'Seaweed', '🌊'),
+  Ingredient('salad', 'Salad', '🥗', isSnackSafe: true),
+
+  // Fruit.
+  Ingredient('dates', 'Dates', '🟤', isSnackSafe: true),
+  Ingredient('apricot', 'Apricot', '🍑', isSnackSafe: true),
+  Ingredient('cherries', 'Cherries', '🍒', isSnackSafe: true),
+  Ingredient('blueberries', 'Blueberries', '🫐', isSnackSafe: true),
+  Ingredient('raspberries', 'Raspberries', '🫐', isSnackSafe: true),
+  Ingredient('peach', 'Peach', '🍑', isSnackSafe: true),
+  Ingredient('pear', 'Pear', '🍐', isSnackSafe: true),
+  Ingredient('figs', 'Figs', '🟣', isSnackSafe: true),
+  Ingredient('kiwi', 'Kiwi', '🥝', isSnackSafe: true),
+  Ingredient('melon', 'Melon', '🍈', isSnackSafe: true),
+  Ingredient('olives', 'Olives', '🫒', isSnackSafe: true),
+
+  // Snacks and treats.
+  Ingredient('candy', 'Candy', '🍬', isSnackSafe: true),
+  Ingredient('biscuit', 'Biscuit', '🍪', isSnackSafe: true),
+  Ingredient('popcorn', 'Popcorn', '🍿', isSnackSafe: true),
+  Ingredient('fries', 'French Fries', '🍟', isSnackSafe: true),
+  Ingredient('pudding', 'Pudding', '🍮', isSnackSafe: true),
+  Ingredient('ice_cream', 'Ice Cream', '🍦', isSnackSafe: true),
+  Ingredient('pie', 'Pie', '🥧', isSnackSafe: true),
+  Ingredient('burger', 'Burger', '🍔', isSnackSafe: true),
+  Ingredient('dumplings', 'Dumplings', '🥟'),
+  Ingredient('nuts', 'Nuts', '🥜', isSnackSafe: true),
+  Ingredient('dried_fruit', 'Dried Fruit', '🍇', isSnackSafe: true),
+  Ingredient('chips', 'Chips', '🥔', isSnackSafe: true),
+  Ingredient('cereal', 'Cereal', '🥣', isSnackSafe: true),
+
+  // Sauces and spreads.
+  Ingredient('sauce', 'Sauce', '🥫'),
+  Ingredient('mayo', 'Mayonnaise', '🥫'),
+  Ingredient('ketchup', 'Ketchup', '🍅'),
+  Ingredient('mustard', 'Mustard', '🥫'),
+  Ingredient('jam', 'Jam', '🍓', isSnackSafe: true),
+  Ingredient('pickles', 'Pickles', '🥒', isSnackSafe: true),
 ];
 
-/// The foods we show first when a child taps "Add food".
+/// The foods we show in the add-food grid. Common foods come first.
 const List<String> commonFoodIds = [
   'milk',
   'eggs',
@@ -139,6 +197,62 @@ const List<String> commonFoodIds = [
   'soup',
   'flour',
   'noodles',
+  // Foods found by the FoodSeg103 model.
+  'meat',
+  'sausage',
+  'seafood',
+  'shrimp',
+  'tofu',
+  'eggplant',
+  'cauliflower',
+  'ginger',
+  'okra',
+  'pumpkin',
+  'radish',
+  'asparagus',
+  'bamboo_shoots',
+  'celery',
+  'herbs',
+  'bean_sprouts',
+  'seaweed',
+  'salad',
+  'dates',
+  'apricot',
+  'cherries',
+  'blueberries',
+  'raspberries',
+  'peach',
+  'pear',
+  'figs',
+  'kiwi',
+  'melon',
+  'olives',
+  'candy',
+  'biscuit',
+  'popcorn',
+  'fries',
+  'pudding',
+  'ice_cream',
+  'pie',
+  'burger',
+  'dumplings',
+  'nuts',
+  'dried_fruit',
+  'chips',
+  'cereal',
+  'sauce',
+  'mayo',
+  'ketchup',
+  'mustard',
+  'jam',
+  'pickles',
+  // The COCO dishes, so a child can add them by hand too.
+  'sandwich',
+  'pizza',
+  'hot_dog',
+  'donut',
+  'cake',
+  'drink',
 ];
 
 /// Every ingredient the app knows, found by id.
@@ -151,7 +265,7 @@ Ingredient? findIngredient(String id) {
   return null;
 }
 
-/// Turns a YOLO class name such as "hot dog" into one of our foods.
+/// Turns a COCO class name such as "hot dog" into one of our foods.
 Ingredient? findFoodFromCocoClass(String className) {
   final String name = className.toLowerCase().trim();
   for (final Ingredient food in allIngredients) {
@@ -162,7 +276,121 @@ Ingredient? findFoodFromCocoClass(String className) {
   return null;
 }
 
-/// Dishes and tools the model may see. They are not food, so we hide them.
+/// FoodSeg103 class names mapped to the food we show the child.
+///
+/// The model's 104 classes include "background" and "other ingredients", which
+/// are not foods. A few very specific model classes share one friendly food
+/// (all mushrooms become Mushroom, for example).
+const Map<String, String> foodSegClassToIngredient = {
+  'candy': 'candy',
+  'egg tart': 'cake',
+  'french fries': 'fries',
+  'chocolate': 'chocolate',
+  'biscuit': 'biscuit',
+  'popcorn': 'popcorn',
+  'pudding': 'pudding',
+  'ice cream': 'ice_cream',
+  'cheese butter': 'cheese',
+  'cake': 'cake',
+  'milkshake': 'drink',
+  'juice': 'drink',
+  'milk': 'milk',
+  'almond': 'nuts',
+  'red beans': 'beans',
+  'cashew': 'nuts',
+  'dried cranberries': 'dried_fruit',
+  'soy': 'beans',
+  'walnut': 'nuts',
+  'peanut': 'nuts',
+  'egg': 'eggs',
+  'apple': 'apple',
+  'date': 'dates',
+  'apricot': 'apricot',
+  'avocado': 'avocado',
+  'banana': 'banana',
+  'strawberry': 'strawberry',
+  'cherry': 'cherries',
+  'blueberry': 'blueberries',
+  'raspberry': 'raspberries',
+  'mango': 'mango',
+  'olives': 'olives',
+  'peach': 'peach',
+  'lemon': 'lemon',
+  'pear': 'pear',
+  'fig': 'figs',
+  'pineapple': 'pineapple',
+  'grape': 'grapes',
+  'kiwi': 'kiwi',
+  'melon': 'melon',
+  'orange': 'orange',
+  'watermelon': 'watermelon',
+  'steak': 'meat',
+  'pork': 'meat',
+  'chicken duck': 'chicken',
+  'sausage': 'sausage',
+  'fried meat': 'meat',
+  'lamb': 'meat',
+  'sauce': 'sauce',
+  'crab': 'seafood',
+  'fish': 'fish',
+  'shellfish': 'seafood',
+  'shrimp': 'shrimp',
+  'soup': 'soup',
+  'bread': 'bread',
+  'corn': 'corn',
+  'hamburg': 'burger',
+  'pizza': 'pizza',
+  'hanamaki baozi': 'dumplings',
+  'wonton dumplings': 'dumplings',
+  'pasta': 'pasta',
+  'noodles': 'noodles',
+  'rice': 'rice',
+  'pie': 'pie',
+  'tofu': 'tofu',
+  'eggplant': 'eggplant',
+  'potato': 'potato',
+  'garlic': 'garlic',
+  'cauliflower': 'cauliflower',
+  'tomato': 'tomato',
+  'kelp': 'seaweed',
+  'seaweed': 'seaweed',
+  'spring onion': 'onion',
+  'rape': 'spinach',
+  'ginger': 'ginger',
+  'okra': 'okra',
+  'lettuce': 'lettuce',
+  'pumpkin': 'pumpkin',
+  'cucumber': 'cucumber',
+  'white radish': 'radish',
+  'carrot': 'carrot',
+  'asparagus': 'asparagus',
+  'bamboo shoots': 'bamboo_shoots',
+  'broccoli': 'broccoli',
+  'celery stick': 'celery',
+  'cilantro mint': 'herbs',
+  'snow peas': 'peas',
+  'cabbage': 'cabbage',
+  'bean sprouts': 'bean_sprouts',
+  'onion': 'onion',
+  'pepper': 'bell_pepper',
+  'green beans': 'beans',
+  'french beans': 'beans',
+  'king oyster mushroom': 'mushroom',
+  'shiitake': 'mushroom',
+  'enoki mushroom': 'mushroom',
+  'oyster mushroom': 'mushroom',
+  'white button mushroom': 'mushroom',
+  'salad': 'salad',
+};
+
+/// Turns a FoodSeg103 class name such as "cheese butter" into a food.
+Ingredient? findFoodFromFoodSegClass(String className) {
+  final String id =
+      foodSegClassToIngredient[className.toLowerCase().trim()] ?? '';
+  return id.isEmpty ? null : findIngredient(id);
+}
+
+/// Dishes and tools the COCO model may see. They are not food, so we hide them.
 const List<String> ignoredCocoClasses = [
   'cup',
   'bowl',

@@ -149,6 +149,15 @@ class _CheckFoodScreenState extends State<CheckFoodScreen> {
           _problem = _ScanProblem.noFood;
         }
       });
+    } on ScanCancelledException {
+      // The child tapped Stop or left the page. Do not show an error.
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _detecting = false;
+        _problem = _ScanProblem.none;
+      });
     } on TimeoutException {
       if (!mounted) {
         return;
@@ -167,6 +176,20 @@ class _CheckFoodScreenState extends State<CheckFoodScreen> {
         _problem = _ScanProblem.photo;
       });
     }
+  }
+
+  /// Asks the finder to stop. The overlay stays until the current close-up
+  /// finishes, then the scan ends without an error card.
+  void _stopScan() {
+    widget.detector.cancelScan();
+  }
+
+  @override
+  void dispose() {
+    if (_detecting) {
+      widget.detector.cancelScan();
+    }
+    super.dispose();
   }
 
   /// Opens the big food grid. The child can add and remove foods there.
@@ -247,6 +270,7 @@ class _CheckFoodScreenState extends State<CheckFoodScreen> {
       return;
     }
     if (!stay) {
+      widget.detector.cancelScan();
       Navigator.of(context).pop();
     }
   }
@@ -264,13 +288,43 @@ class _CheckFoodScreenState extends State<CheckFoodScreen> {
       child: Scaffold(
         appBar: AppBar(title: const Text(AppStrings.checkTitle)),
         body: SafeArea(
-          child: LayoutBuilder(
-            builder: (BuildContext context, BoxConstraints constraints) {
-              if (isWideScreen(constraints.maxWidth)) {
-                return _buildWide(context);
-              }
-              return _buildNarrow(context);
-            },
+          child: Stack(
+            children: [
+              LayoutBuilder(
+                builder: (BuildContext context, BoxConstraints constraints) {
+                  if (isWideScreen(constraints.maxWidth)) {
+                    return _buildWide(context);
+                  }
+                  return _buildNarrow(context);
+                },
+              ),
+              // A long scan covers the whole page, not just the photo. This
+              // keeps the progress bar and Stop button easy to reach even when
+              // the photo is a wide panorama.
+              if (_detecting)
+                Positioned.fill(
+                  child: ListenableBuilder(
+                    listenable: widget.detector,
+                    builder: (BuildContext context, Widget? child) {
+                      final ScanProgress progress =
+                          widget.detector.scanProgress.value;
+                      return DetectingOverlay(
+                        waitingForModel:
+                            widget.detector.status == DetectorStatus.loading,
+                        progress: progress.fraction,
+                        progressLabel: progress.total <= 0
+                            ? null
+                            : AppStrings.scanningStep(
+                                progress.done,
+                                progress.total,
+                              ),
+                        onCancel: _stopScan,
+                        borderRadius: 0,
+                      );
+                    },
+                  ),
+                ),
+            ],
           ),
         ),
       ),
@@ -378,22 +432,12 @@ class _CheckFoodScreenState extends State<CheckFoodScreen> {
           child: SizedBox(
             width: width,
             height: height,
-            child: Stack(
-              fit: StackFit.expand,
-              children: [
-                PhotoWithBoxes(
-                  imageBytes: bytes,
-                  aspectRatio: _aspectRatio,
-                  detections: _detections,
-                  activeFoodIds: _foodIds,
-                  maxHeight: maxHeight,
-                ),
-                if (_detecting)
-                  DetectingOverlay(
-                    waitingForModel:
-                        widget.detector.status == DetectorStatus.loading,
-                  ),
-              ],
+            child: PhotoWithBoxes(
+              imageBytes: bytes,
+              aspectRatio: _aspectRatio,
+              detections: _detections,
+              activeFoodIds: _foodIds,
+              maxHeight: maxHeight,
             ),
           ),
         );

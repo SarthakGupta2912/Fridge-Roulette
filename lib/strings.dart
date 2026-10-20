@@ -136,9 +136,10 @@ class AppStrings {
   static const String addFoodSubtitle =
       'Tap a food to add it. Tap again to remove it.';
   static const String done = 'Done';
-  static const String lookingForFood = 'Looking for food...';
+  static const String lookingForFood = 'Looking closely at your fridge...';
   static const String foundFoods = 'Here is what I found!';
   static const String helpModel = 'My food finder is getting ready!';
+  static const String stopLooking = 'Stop looking';
 
   static const String spinTheWheel = 'Spin the Wheel!';
   static const String spin = 'Spin!';
@@ -226,7 +227,8 @@ class AppStrings {
       'Take a new photo or pick one from your gallery.';
   static const String camera = 'Camera';
   static const String gallery = 'Gallery';
-  static const String detectingHint = 'This takes about 1 second.';
+  static const String detectingHint =
+      'This can take up to 2 minutes. Thanks for waiting!';
   static const String foodsReady = 'foods ready';
   static const String oneFoodReady = 'food ready';
   static const String retryLoad = 'Wake it up';
@@ -243,6 +245,11 @@ class AppStrings {
   /// "3 foods ready" or "1 food ready".
   static String foodCount(int count) {
     return '$count ${count == 1 ? oneFoodReady : foodsReady}';
+  }
+
+  /// "Checking part 3 of 11" while the close-up scan runs.
+  static String scanningStep(int done, int total) {
+    return 'Checking part $done of $total';
   }
 
   static String downloadProgress(int percent, int doneMb, int totalMb) {
