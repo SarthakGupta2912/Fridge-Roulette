@@ -50,7 +50,7 @@ BUILT FOR KIDS
 * Looks great on phones and tablets, portrait or landscape
 
 REAL FOOD, REAL IDEAS
-* 48 foods you can add by hand
+* 96 foods you can add by hand
 * Recipes only use food you actually have
 * Pantry basics like salt, oil, and water are assumed
 * No alcohol, and meat, fish, and eggs must be fully cooked
@@ -68,11 +68,11 @@ PRIVATE BY DESIGN
 * No camera permission needed: your phone's camera app takes the picture
 
 IMPORTANT
-The food finder knows common foods like bananas, apples, oranges, broccoli, carrots, sandwiches, pizza, hot dogs, donuts, cake, and drinks. It may miss other items, so the hand-add list is always there. AI recipes are generated on the device and should be checked by a grown-up. Always check food for allergies and ask a grown-up for help with knives and hot things.
+The food finder checks the whole photo, nine close-ups, and package labels. It knows common foods like bananas, apples, oranges, broccoli, carrots, sandwiches, pizza, hot dogs, donuts, cake, drinks, milk, eggs, cheese, bread, meat, fish, rice, pasta, and many vegetables. It may still miss items and can confuse similar foods, so the hand-add list is always there. AI recipes are generated on the device and should be checked by a grown-up. Always check food for allergies and ask a grown-up for help with knives and hot things.
 
 Fridge Roulette is a cooking game, not medical or nutrition advice.
 
-Made with Flutter, an on-device YOLO food finder, and the Qwen2.5 0.5B Instruct model (Apache-2.0). Source code is available under the AGPL-3.0 license.
+Made with Flutter, two on-device YOLO food models, on-device ML Kit label reading, and the Qwen2.5 0.5B Instruct model (Apache-2.0). Source code is available under the AGPL-3.0 license.
 ```
 
 ## Graphics checklist

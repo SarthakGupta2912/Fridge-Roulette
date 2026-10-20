@@ -15,6 +15,8 @@ This checklist takes Fridge Roulette from source to the Google Play Console.
 | Signing | `android/key.properties` + `android/app/upload-keystore.jks` (both ignored) |
 | Minify / shrink | R8 and resource shrinking enabled for release |
 | Runtime permissions | `INTERNET`, `ACCESS_NETWORK_STATE`, `WAKE_LOCK`, plus the app's private dynamic-receiver permission |
+| Food models | COCO detector (2.9 MB) + FoodSeg103 segmenter (14.6 MB), both bundled |
+| Package labels | ML Kit Latin OCR, bundled, on-device |
 | AI model | Qwen2.5 0.5B Instruct, about 521 MiB, downloaded once, not bundled |
 | Model license | Apache License 2.0 |
 
@@ -61,7 +63,7 @@ flutter analyze
 flutter test
 ```
 
-Expected: no formatting changes, no analyzer issues, 28 passing tests.
+Expected: no formatting changes, no analyzer issues, 39 passing tests.
 
 ## 4. Build the artifacts
 
@@ -80,18 +82,18 @@ flutter build apk --release --split-per-abi
 
 Outputs:
 
-| Artifact | Path | Size (v1.0.0) |
+| Artifact | Path | Size (current build) |
 | --- | --- | --- |
-| Release APK (universal) | `build\app\outputs\flutter-apk\app-release.apk` | 198,435,675 bytes (189.2 MB) |
-| Release AAB | `build\app\outputs\bundle\release\app-release.aab` | 164,701,403 bytes (157.1 MB) |
+| Release APK (universal) | `build\app\outputs\flutter-apk\app-release.apk` | 98,669,409 bytes (94.1 MiB) |
+| Release AAB | `build\app\outputs\bundle\release\app-release.aab` | 160,584,812 bytes (153.1 MiB) |
 
-The AI model is **not** in either file. The large size comes from the MediaPipe/Flutter AI native libraries for `arm64-v8a`, `armeabi-v7a`, and `x86_64`. The AAB lets Play deliver only the needed pieces. The universal APK contains all three ABIs.
+The AI recipe model is **not** in either file. The size comes from the MediaPipe/Flutter AI native libraries for `arm64-v8a`, `armeabi-v7a`, and `x86_64`, the two bundled food models, and ML Kit's bundled Latin OCR model. The AAB lets Play deliver only the needed pieces. The universal APK contains all three ABIs and stays below 100 MB, but only just.
 
 SHA-256 checksums for this build:
 
 ```text
-app-release.apk  72006320593A111CA329DB272F33E881D94DBE09FD0356C9EA2DDE98EAFB67CE
-app-release.aab  EF0BB2D078EACE3832F743FCF3728F36B04935FDF71C398DB6C53CD629D61202
+app-release.apk  A0546B024DDDCEA592052543233FAABAD8F7D7794AEEE2626B397BE2C0470AED
+app-release.aab  2B44C167BC7B74D10A189BFF99D022E4BC09377ABB9085DB7E0601201325231B
 ```
 
 If you rebuild, the checksums change. Recompute with:
@@ -138,7 +140,7 @@ The manifest uses `tools:node="remove"` for camera and foreground-service permis
 
 ### R8 keep rules
 
-LiteRT and MediaPipe run model methods through JNI and reflection. WorkManager opens its Room database by name at startup. `android/app/proguard-rules.pro` keeps the YOLO, LiteRT, Room, and WorkManager classes. Without those rules, the release build can crash on launch while the debug build works. Re-test the release APK whenever dependencies or ProGuard rules change.
+LiteRT and MediaPipe run model methods through JNI and reflection. WorkManager opens its Room database by name at startup. `android/app/proguard-rules.pro` keeps the YOLO, LiteRT, Room, WorkManager, and SnakeYAML classes. It also suppresses R8 warnings for the Chinese, Devanagari, Japanese, and Korean OCR options that are not bundled; only the Latin recognizer is used. Without these rules, the release build fails at `minifyReleaseWithR8`. Re-test the release APK whenever dependencies or ProGuard rules change.
 
 ### Package details
 
@@ -166,8 +168,10 @@ The AAB cannot be installed directly. Use Play internal testing, or `bundletool 
 Do this on at least one real phone before uploading:
 
 - [ ] First launch shows the native splash, then the in-app splash, then Home.
-- [ ] The YOLO detector reaches the ready state (no sleepy banner).
+- [ ] Both YOLO models load and the detector reaches the ready state (no sleepy banner).
 - [ ] Take a photo of a fridge with a banana, apple, bottle, or other COCO food; boxes appear.
+- [ ] Take a photo with milk, eggs, bread, cheese, or a labelled package; the FoodSeg103 model and the label reader find it.
+- [ ] Watch the scan progress bar and step counter; a full scan may take up to two minutes. Tap **Stop** once and confirm the scan ends without an error card.
 - [ ] Remove a wrong chip; add food by hand; the list updates.
 - [ ] Spin with 2 foods; the roulette opens the recipe screen.
 - [ ] First recipe request offers the chef-brain download, with the size, license, storage warning, and Wi-Fi hint.
@@ -243,5 +247,6 @@ Suggested shot list: Home, detection result with boxes, food chips, spinning whe
 
 - Flutter prints a warning that `ultralytics_yolo` still applies the Kotlin Gradle Plugin. The build succeeds today; upgrade the plugin when it supports Flutter's built-in Kotlin.
 - Kotlin incremental compilation is disabled in `android/gradle.properties` because the pub cache and project are on different drives, which otherwise breaks the build with a "different roots" cache error.
-- The universal APK is large because it includes MediaPipe native libraries for three ABIs. Use the AAB for Play and split APKs for small test installs.
-- The 521 MiB model download and live MediaPipe generation still need a final test on a real phone. Test low storage, no internet, cancel, background, and retry before publishing.
+- The universal APK is 98,669,409 bytes, just under the 100 MB limit. Any new native library or model will push it over. Use the AAB for Play and split APKs for small test installs.
+- ML Kit OCR is bundled for Latin script only. The other script options are referenced by the plugin but intentionally not shipped; the ProGuard rules suppress their missing-class warnings.
+- The dual-model scan and label reader still need a full device smoke test after the FoodSeg103 asset was added. The 521 MiB model download and live MediaPipe generation also still need a final test on a real phone. Test low storage, no internet, cancel, background, and retry before publishing.

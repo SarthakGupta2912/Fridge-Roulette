@@ -29,7 +29,7 @@ The food you confirm or add is used only to write a recipe during the current se
 
 ### On-device food detection
 
-The app includes a YOLO object-detection model in its own files. All detection happens on your device using the phone's processor or GPU. No image or result is sent to Ultralytics, Google, or any other company.
+The app includes two YOLO food models (a COCO detector and a FoodSeg103 segmenter) and ML Kit's Latin text recognizer in its own files. All detection and package-label reading happen on your device using the phone's processor. The OCR model is bundled, so label text is not sent to Google or any other company. No image or result is sent to Ultralytics, Google, or any other company.
 
 ### On-device AI recipe writing
 

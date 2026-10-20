@@ -42,7 +42,8 @@ The parser is lenient. If the model writes something unusable, the screen shows 
 
 ## Privacy and network
 
-- The YOLO food detector is bundled in `assets/models/food_detector.tflite` (about 2.9 MB). The app never downloads a detector.
+- Two YOLO food models are bundled: a COCO detector (`assets/models/food_detector.tflite`, about 2.9 MB) and a FoodSeg103 segmenter (`assets/models/food_detector_foodseg.tflite`, about 14.6 MB). The app never downloads a detector.
+- Package labels are read on-device by ML Kit's bundled Latin text model (`google_mlkit_text_recognition` 0.17.1). No text or image leaves the phone, and no extra model download happens.
 - The only network request is the one-time AI model download from Hugging Face. It sends no account, photo, food list, recipe, or personal profile. Standard connection information such as an IP address is handled by Hugging Face as part of the download; their privacy policy applies.
 - Photos, food lists, and recipes stay on the phone. No photo or recipe is uploaded.
 - No analytics, ads, tracking SDKs, crash reporting, or external APIs.
@@ -51,8 +52,8 @@ The parser is lenient. If the model writes something unusable, the screen shows 
 
 ## Features
 
-- One-time on-device detection with bounding boxes on the photo.
-- 48 foods in the hand-add catalog.
+- Careful on-device scan: one full-photo pass, nine overlapping close-ups, and one package-label pass, with bounding boxes on the photo. A scan can take up to two minutes on a slow tablet.
+- 96 foods in the hand-add catalog, including foods found only by the FoodSeg103 model.
 - Live, streaming recipe writing with a typing-style text reveal and a **Stop** button.
 - Random chef style and fun twist, plus the last three recipe names are sent back so the model avoids repeats.
 - Quick chef fallback using a method, a flavour, a serving idea, and the detected foods. It never repeats the same title twice in a row.
@@ -72,7 +73,8 @@ The parser is lenient. If the model writes something unusable, the screen shows 
 | --- | --- |
 | Framework | Flutter 3.44.6 / Dart 3.12.2 |
 | UI | Material 3, plain `StatefulWidget` + `setState` |
-| Detection | [`ultralytics_yolo`](https://pub.dev/packages/ultralytics_yolo) 0.6.16 with an int8 COCO YOLO model |
+| Detection | [`ultralytics_yolo`](https://pub.dev/packages/ultralytics_yolo) 0.6.16 with an int8 COCO detector and a FoodSeg103 segmenter |
+| Package labels | `google_mlkit_text_recognition` 0.17.1 with the bundled Latin model |
 | Camera / gallery | `image_picker` 1.2.4 |
 | On-device AI | `flutter_edge_ai` 2.4.1 + `flutter_edge_ai_mediapipe` 1.2.2 |
 | Recipe model | Qwen2.5 0.5B Instruct, Apache-2.0, downloaded once |
@@ -81,11 +83,13 @@ The parser is lenient. If the model writes something unusable, the screen shows 
 
 ### Food coverage
 
-The bundled COCO model can find these foods directly:
+Three on-device readers work together:
 
-`banana`, `apple`, `orange`, `broccoli`, `carrot`, `sandwich`, `pizza`, `hot dog`, `donut`, `cake`, and `bottle` (shown as **Juice or Drink**).
+1. **COCO detector** finds common foods such as `banana`, `apple`, `orange`, `broccoli`, `carrot`, `sandwich`, `pizza`, `hot dog`, `donut`, `cake`, and `bottle` (shown as **Juice or Drink**).
+2. **FoodSeg103 segmenter** adds milk, cheese, butter, eggs, bread, meat, fish, shrimp, tofu, rice, pasta, sauce, juice, and many fruits and vegetables. It runs on the full photo and on nine overlapping close-ups so small items are not lost.
+3. **Label reader** uses ML Kit to read package text and common brands (for example "Philadelphia" or "Lait 2%") and turns the words into foods.
 
-Everything else in the catalog is added by hand: milk, eggs, cheese, tomato, bread, rice, chicken, vegetables, fruit, and pantry items. Dishes and tools such as cups, bowls, forks, and the fridge itself are ignored on purpose.
+The catalog has 96 foods, and every one can also be added by hand. Per-food confidence thresholds are lower for milk, cheese, eggs, and bread, which are often small or partly hidden. Tiny and very thin boxes are filtered out, results are capped at 24 foods, and the generic "Juice or Drink" chip is removed when milk is found. Dishes and tools such as cups, bowls, forks, and the fridge itself are ignored on purpose.
 
 ## Run the app
 
@@ -111,12 +115,14 @@ flutter analyze
 flutter test
 ```
 
-The suite has 28 tests:
+The suite has 39 tests:
 
 - prompt contains the foods, basics, recent names, safety rules, and the fixed format;
 - parser handles a well-formed recipe, messy stars/lowercase/missing emoji, missing `STEPS`, and broken text;
 - Quick chef uses the child's foods and never repeats the same title twice in a row;
 - model metadata records the small mobile model and its commercial-use license;
+- food mapping covers COCO names, FoodSeg103 names, and duplicate-free hand-add ids;
+- label reading handles brands, multi-word foods, French labels, and pantry words that must not match;
 - widget tests cover home, check-food, roulette, live AI recipe, raw fallback, Quick chef, settings, and 360x640, 640x360, and 1024x1366 layouts at 1.5x text.
 
 ## Build for release
@@ -130,12 +136,12 @@ flutter build apk --release
 flutter build appbundle --release
 ```
 
-Artifacts:
+Artifacts (current build):
 
-- `build\app\outputs\flutter-apk\app-release.apk` - universal APK, about 189 MB
-- `build\app\outputs\bundle\release\app-release.aab` - Play bundle, about 157 MB
+- `build\app\outputs\flutter-apk\app-release.apk` - universal APK, 98,669,409 bytes (94.1 MiB), SHA-256 `A0546B024DDDCEA592052543233FAABAD8F7D7794AEEE2626B397BE2C0470AED`
+- `build\app\outputs\bundle\release\app-release.aab` - Play bundle, 160,584,812 bytes (153.1 MiB), SHA-256 `2B44C167BC7B74D10A189BFF99D022E4BC09377ABB9085DB7E0601201325231B`
 
-The AI model is not inside either file. The large size comes from the MediaPipe/Flutter AI native libraries for three ABIs. Play delivers only the needed pieces from the AAB. For a smaller direct-install APK, use:
+The AI recipe model is not inside either file. The size comes from the MediaPipe/Flutter AI native libraries for three ABIs, the two bundled food models, and ML Kit's on-device OCR model. Native libraries are stored compressed in the APK. Play delivers only the needed pieces from the AAB. For a smaller direct-install APK, use:
 
 ```powershell
 flutter build apk --release --split-per-abi
@@ -151,11 +157,12 @@ lib/
   strings.dart              Every word the child sees
   theme.dart                Light and dark Material 3 themes
   data/
-    ingredients.dart        Food catalog and COCO name mapping
+    ingredients.dart        Food catalog, COCO names, and FoodSeg103 names
     recipe.dart             Recipe model
     model_info.dart         AI model name, size, URL, and license
   services/
-    detector_service.dart   Load the YOLO model once, detect food, safe boxes
+    detector_service.dart   Load both YOLO models, tile the photo, merge foods
+    label_reader.dart       ML Kit OCR and package-text-to-food rules
     chef_brain.dart         Download, check, cancel, and delete the AI model
     recipe_generator.dart   Load the model, stream a recipe, stop, release
     recipe_prompt.dart      Prompt builder and lenient plain-text parser
@@ -170,12 +177,14 @@ lib/
     settings_screen.dart    Chef brain status, delete, About
   widgets/                  Reusable buttons, chips, dialogs, photo boxes
 assets/models/
-  food_detector.tflite      Bundled int8 COCO model (not the AI chef)
+  food_detector.tflite      Bundled int8 COCO detector (not the AI chef)
+  food_detector_foodseg.tflite  Bundled FoodSeg103 segmenter
 test/
   recipe_generator_test.dart  Prompt, parser, Quick chef, model info
+  food_finder_test.dart       Food names and package-label reading
   widget_test.dart            Screen layout and flow tests
 android/
-  app/proguard-rules.pro    Extra R8 rules for YOLO / LiteRT / WorkManager
+  app/proguard-rules.pro    Extra R8 rules for YOLO / LiteRT / ML Kit
 ```
 
 ### Prompt and parser
@@ -188,12 +197,12 @@ All visible text belongs in `lib/strings.dart`.
 
 - The AI model is a one-time 521 MiB download. On a slow connection it can take a while, and low-storage phones need free space first.
 - The first AI recipe is slower because the model has to load. The app tries GPU first, then CPU. Low-end phones may take longer or fall back to the Quick chef.
-- The detector is trained on COCO classes, so it cannot see every fridge item. The hand-add grid is the main fallback.
-- Detection works best with good light and an open fridge door. Boxes show only the first box for each food.
-- Dark, clear bottles, and some packages may be missed or labeled "Juice or Drink".
+- The two food models still cannot match a cloud vision model or a human. FoodSeg103 sometimes confuses similar produce (for example radishes as cherries) and misses plain or partly hidden packages. The hand-add grid remains the main fallback.
+- Detection works best with good light and an open fridge door. Boxes show only the first box for each food. A careful scan can take up to two minutes on a slow device.
+- Dark, clear bottles, and some packages may be missed or labeled "Juice or Drink". Labels must be readable and in Latin script (English or French words are mapped best).
 - AI recipes are generated, not reviewed one by one. The prompt restricts ingredients and gives safety rules, but a grown-up should still check allergies and cooking steps.
-- The universal release APK is about 189 MB because it contains MediaPipe native libraries for `arm64-v8a`, `armeabi-v7a`, and `x86_64`. The AAB is about 157 MB. Use split APKs for smaller test installs.
-- The release has been smoke-tested on a Samsung Galaxy Tab S6 Lite (Android 12) for launch, detection, food editing, roulette, recipe, landscape, and 1.5x text. The 521 MB AI download and live MediaPipe generation still need a final test on a real phone.
+- The universal release APK is 98,669,409 bytes (94.1 MiB) because it contains MediaPipe and ML Kit native libraries for `arm64-v8a`, `armeabi-v7a`, and `x86_64`, plus the two food models. It stays under the 100 MB APK limit, but there is little room left. Use the AAB for Play (153.1 MiB) and split APKs for smaller test installs.
+- The original flow was smoke-tested on a Samsung Galaxy Tab S6 Lite (Android 12). The dual-model scan and label reader were verified on the desktop with the same model files, but still need a final on-device run. The 521 MB AI download and live MediaPipe generation also still need a final test on a real phone.
 - The Ultralytics plugin still applies the Kotlin Gradle Plugin, so Flutter prints a future-compatibility warning at build time. Watch the plugin for an update.
 - The recipe set is entertainment, not medical or allergy advice. Always check ingredients for allergies.
 
