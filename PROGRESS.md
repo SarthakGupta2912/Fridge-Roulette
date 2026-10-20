@@ -70,7 +70,7 @@ This file is my checklist. I update it after every phase.
 | Flutter / Dart | 3.44.6 / 3.12.2 |
 | Analyze | No issues |
 | Tests | 25 passed |
-| Debug APK | `build/app/outputs/flutter-apk/app-debug.apk` (182.02 MB) |
+| Debug APK | `build/app/outputs/flutter-apk/app-debug.apk` (203.52 MB) |
 | Release APK | `build/app/outputs/flutter-apk/app-release.apk` (74.54 MB) |
 | Release AAB | `build/app/outputs/bundle/release/app-release.aab` (64.42 MB) |
 | Release permissions | No INTERNET, CAMERA, network state, or background permissions |

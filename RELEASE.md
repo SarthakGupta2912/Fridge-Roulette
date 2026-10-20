@@ -75,7 +75,7 @@ Outputs:
 
 | Artifact | Path | Size (v1.0.0) |
 | --- | --- | --- |
-| Debug APK | `build\app\outputs\flutter-apk\app-debug.apk` | 182.02 MB |
+| Debug APK | `build\app\outputs\flutter-apk\app-debug.apk` | 203.52 MB |
 | Release APK (universal) | `build\app\outputs\flutter-apk\app-release.apk` | 74.54 MB |
 | Release AAB | `build\app\outputs\bundle\release\app-release.aab` | 64.42 MB |
 
