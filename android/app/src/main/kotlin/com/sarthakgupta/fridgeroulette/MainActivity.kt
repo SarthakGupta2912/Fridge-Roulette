@@ -1,4 +1,4 @@
-package com.Sarthak.fridge_roulette
+package com.sarthakgupta.fridgeroulette
 
 import io.flutter.embedding.android.FlutterActivity
 

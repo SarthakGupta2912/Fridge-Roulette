@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- A white fridge on the app's orange launcher background. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M42,26 H66 A6,6 0 0 1 72,32 V76 A6,6 0 0 1 66,82 H42 A6,6 0 0 1 36,76 V32 A6,6 0 0 1 42,26 Z" />
+    <path
+        android:fillColor="#FFFF7A00"
+        android:pathData="M36,47 H72 V51 H36 Z" />
+    <path
+        android:fillColor="#FFFF7A00"
+        android:pathData="M63,32 H67 V42 H63 Z" />
+    <path
+        android:fillColor="#FFFF7A00"
+        android:pathData="M63,55 H67 V68 H63 Z" />
+</vector>
