@@ -14,7 +14,9 @@ This checklist takes Fridge Roulette from source to the Google Play Console.
 | NDK | `28.2.13676358` |
 | Signing | `android/key.properties` + `android/app/upload-keystore.jks` (both ignored) |
 | Minify / shrink | R8 and resource shrinking enabled for release |
-| Permissions in release APK | Only the app's own `DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION` |
+| Runtime permissions | `INTERNET`, `ACCESS_NETWORK_STATE`, `WAKE_LOCK`, plus the app's private dynamic-receiver permission |
+| AI model | Qwen2.5 0.5B Instruct, about 521 MiB, downloaded once, not bundled |
+| Model license | Apache License 2.0 |
 
 The application id is permanent after the first upload. Lock in the signing key before the first Play upload; after that, keep the same key for every update.
 
@@ -49,7 +51,7 @@ Update the version in `pubspec.yaml`:
 version: 1.0.1+2
 ```
 
-`1.0.1` is the version name shown to users. `+2` is the version code and must be higher than every previous upload.
+`1.0.1` is the version name shown to users. `+2` is the version code and must be higher than every previous upload. If this is truly the first Play upload, `1.0.0+1` is fine. Also update `AppStrings.appVersion` in `lib/strings.dart`.
 
 ## 3. Run the checks
 
@@ -59,60 +61,53 @@ flutter analyze
 flutter test
 ```
 
-Expected: no formatting changes, no analyzer issues, 25 passing tests.
+Expected: no formatting changes, no analyzer issues, 28 passing tests.
 
 ## 4. Build the artifacts
 
 ```powershell
 flutter clean
 flutter pub get
-flutter build apk --debug
 flutter build apk --release
 flutter build appbundle --release
+```
+
+Optional smaller test APKs:
+
+```powershell
+flutter build apk --release --split-per-abi
 ```
 
 Outputs:
 
 | Artifact | Path | Size (v1.0.0) |
 | --- | --- | --- |
-| Debug APK | `build\app\outputs\flutter-apk\app-debug.apk` | 203.52 MB |
-| Release APK (universal) | `build\app\outputs\flutter-apk\app-release.apk` | 74.59 MB |
-| Release AAB | `build\app\outputs\bundle\release\app-release.aab` | 64.52 MB |
+| Release APK (universal) | `build\app\outputs\flutter-apk\app-release.apk` | 198,435,675 bytes (189.2 MB) |
+| Release AAB | `build\app\outputs\bundle\release\app-release.aab` | 164,701,403 bytes (157.1 MB) |
 
-The debug APK is large because it contains every ABI and no shrinking. Use the universal release APK for direct installs and the AAB for Play.
+The AI model is **not** in either file. The large size comes from the MediaPipe/Flutter AI native libraries for `arm64-v8a`, `armeabi-v7a`, and `x86_64`. The AAB lets Play deliver only the needed pieces. The universal APK contains all three ABIs.
 
 SHA-256 checksums for this build:
 
 ```text
-app-release.apk  7F99C7455880E306197A9430376D1A00013B3BD19C4FA710FAB7B6B20383CADF
-app-release.aab  1D36052A93E2944AE8C8FAC20ED1074D0B1B2F7492CE28A20389611399C5A2BB
+app-release.apk  72006320593A111CA329DB272F33E881D94DBE09FD0356C9EA2DDE98EAFB67CE
+app-release.aab  EF0BB2D078EACE3832F743FCF3728F36B04935FDF71C398DB6C53CD629D61202
 ```
 
-Verified on 20 Oct 2026 on a Samsung Galaxy Tab S6 Lite (SM-T865, Android 12) over wireless ADB: the release APK installs and launches, the model loads, a banana photo is detected and boxed, add-food, the roulette spin, "Banana Shake" and the recipe screen work, and landscape plus 1.5x text render correctly.
-
 If you rebuild, the checksums change. Recompute with:
+
 ```powershell
 Get-FileHash build\app\outputs\flutter-apk\app-release.apk -Algorithm SHA256
 Get-FileHash build\app\outputs\bundle\release\app-release.aab -Algorithm SHA256
 ```
-
-Optional smaller APKs for testers:
-
-```powershell
-flutter build apk --release --split-per-abi
-```
-
-Those files land in `build\app\outputs\flutter-apk\` with `arm64-v8a`, `armeabi-v7a`, and `x86_64` suffixes.
 
 ## 5. Verify the release
 
 ### Signing certificate
 
 ```powershell
-& "$env:LOCALAPPDATA\Android\Sdk\build-tools\36.0.0\apksigner.bat" verify --print-certs build\app\outputs\flutter-apk\app-release.apk
+& "D:\Android\Sdk\build-tools\36.0.0\apksigner.bat" verify --print-certs build\app\outputs\flutter-apk\app-release.apk
 ```
-
-(On this machine the SDK is `D:\Android\Sdk`, so use `D:\Android\Sdk\build-tools\36.0.0\apksigner.bat`.)
 
 The DN should be `CN=Sarthak, OU=PathKosh, O=Sarthak, L=Panchkula, ST=Haryana, C=IN`. The SHA-256 digest for the local upload key is:
 
@@ -128,13 +123,22 @@ Keep this digest. Play App Signing will show a different app-signing certificate
 & "D:\Android\Sdk\build-tools\36.0.0\aapt.exe" dump permissions build\app\outputs\flutter-apk\app-release.apk
 ```
 
-Expected: only `com.sarthakgupta.fridgeroulette.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION`. There must be **no** `INTERNET`, `CAMERA`, `ACCESS_NETWORK_STATE`, `WAKE_LOCK`, `FOREGROUND_SERVICE*`, or `RECEIVE_BOOT_COMPLETED`.
+Expected:
 
-The manifest uses `tools:node="remove"` for permissions that library dependencies add. The debug and profile manifests still add `INTERNET` so Flutter's hot-reload connection works; that is normal and does not affect the release build.
+```text
+android.permission.INTERNET
+android.permission.WAKE_LOCK
+android.permission.ACCESS_NETWORK_STATE
+com.sarthakgupta.fridgeroulette.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION
+```
+
+There must be **no** `CAMERA`, location, storage, microphone, notification, `FOREGROUND_SERVICE*`, or `RECEIVE_BOOT_COMPLETED` permission. `INTERNET` is used only for the one-time AI model download. `ACCESS_NETWORK_STATE` and `WAKE_LOCK` support that download. The merged manifest contains downloader and WorkManager service declarations, but the download runs without a foreground service and no foreground-service permission is declared.
+
+The manifest uses `tools:node="remove"` for camera and foreground-service permissions that libraries add. The debug and profile manifests still add `INTERNET` so Flutter's hot-reload connection works; that is normal and does not affect the release build.
 
 ### R8 keep rules
 
-LiteRT 2.x pulls in Play Asset Delivery, which pulls in WorkManager. WorkManager opens its Room database by name at startup, so `android/app/proguard-rules.pro` keeps `androidx.work.impl.WorkDatabase*`. Without those rules, the release build crashes on launch while the debug build works, with `Failed to create an instance of ...WorkDatabase`. Re-test the release APK whenever dependencies or ProGuard rules change.
+LiteRT and MediaPipe run model methods through JNI and reflection. WorkManager opens its Room database by name at startup. `android/app/proguard-rules.pro` keeps the YOLO, LiteRT, Room, and WorkManager classes. Without those rules, the release build can crash on launch while the debug build works. Re-test the release APK whenever dependencies or ProGuard rules change.
 
 ### Package details
 
@@ -162,19 +166,28 @@ The AAB cannot be installed directly. Use Play internal testing, or `bundletool 
 Do this on at least one real phone before uploading:
 
 - [ ] First launch shows the native splash, then the in-app splash, then Home.
-- [ ] The model reaches the ready state (no sleepy banner).
+- [ ] The YOLO detector reaches the ready state (no sleepy banner).
 - [ ] Take a photo of a fridge with a banana, apple, bottle, or other COCO food; boxes appear.
 - [ ] Remove a wrong chip; add food by hand; the list updates.
-- [ ] Spin with 2 foods; a recipe appears with confetti and haptics.
-- [ ] Read a recipe; Spin Again returns to the wheel; New Photo returns to Home.
-- [ ] Turn on airplane mode and repeat the whole flow. It must still work.
+- [ ] Spin with 2 foods; the roulette opens the recipe screen.
+- [ ] First recipe request offers the chef-brain download, with the size, license, storage warning, and Wi-Fi hint.
+- [ ] Cancel the download; the Quick chef recipe still appears and the app stays usable.
+- [ ] Download the 521 MiB model on Wi-Fi; percent and MB update; the screen survives rotation and a pause.
+- [ ] Interrupt the download (airplane mode); a friendly error appears and Try Again works.
+- [ ] Let the AI chef write a recipe; text appears word by word; the AI chef badge is visible.
+- [ ] Tap **Stop**; the partial raw text or a friendly stopped card appears.
+- [ ] Test a second AI recipe with the same foods; the title and idea should differ.
+- [ ] Tap **Make another one** and **Change foods**.
+- [ ] Open Settings; confirm the model is listed as downloaded with its size and license; delete it and confirm the space is freed.
+- [ ] After the model is deleted, a recipe uses the Quick chef badge and the Get the AI chef action.
+- [ ] Put the app in the background during a recipe, wait, then return; the model is released safely.
+- [ ] Turn on airplane mode after the model is downloaded and repeat the whole flow. It must still work.
 - [ ] Rotate every screen; no overflow and the layout switches at 600 dp.
 - [ ] Set system font size to the largest setting; no clipped text or buttons.
 - [ ] Press back on Check Food; the "Leave this page?" dialog appears.
 - [ ] Kill the app while the system camera is open; reopen and confirm the lost photo is recovered.
 - [ ] Test a fridge photo with no recognizable food; the friendly "I could not see any food" card appears.
-- [ ] Test 2 foods that need cooking (for example onion + potato) to see the mix-and-match/no-recipe message.
-- [ ] Check TalkBack reads the buttons, chips, steps, and photo description.
+- [ ] Check TalkBack reads the buttons, chips, steps, badges, download progress, and photo description.
 - [ ] Check dark mode.
 
 ## 6. Upload to Play Console
@@ -184,9 +197,9 @@ Do this on at least one real phone before uploading:
    - Privacy policy URL (host `PRIVACY_POLICY.md`; GitHub Pages is enough).
    - Ads: **No ads**.
    - In-app purchases: **No**.
-   - Data safety: **No data collected, no data shared**. Photos are processed on-device and are not sent anywhere.
-   - Content rating questionnaire: utility/education/reference or game? Choose the category that fits "casual cooking challenge"; answer no to violence, sex, profanity, drugs, gambling, and user-generated content.
-   - Target audience: if you select ages 6-12, the app falls under the **Families** policy. It has no ads, no purchases, no data collection, and no external links, so it is a good fit. Complete the Families declaration and confirm the privacy policy.
+   - Data safety: **No personal data collected, no data shared**. Internet is used only once to download the AI recipe model. Photos and food lists are processed on-device and are not sent anywhere.
+   - Content rating questionnaire: choose the category that fits "casual cooking challenge"; answer no to violence, sex, profanity, drugs, gambling, and user-generated content.
+   - Target audience: if you select ages 6-12, the app falls under the **Families** policy. It has no ads, no purchases, no personal data collection, and no external links, so it is a good fit. Complete the Families declaration and confirm the privacy policy.
    - News app: no.
    - COVID-19 apps: no.
    - Government app: no.
@@ -217,7 +230,7 @@ These cannot be generated from code alone:
 - [ ] Hosted privacy policy URL.
 - [ ] Support email address.
 
-Suggested shot list: Home, detection result with boxes, food chips, spinning wheel, recipe challenge, recipe steps, dark mode, tablet layout.
+Suggested shot list: Home, detection result with boxes, food chips, spinning wheel, download progress, live AI recipe, recipe steps, dark mode, tablet layout.
 
 ## 8. After release
 
@@ -230,3 +243,5 @@ Suggested shot list: Home, detection result with boxes, food chips, spinning whe
 
 - Flutter prints a warning that `ultralytics_yolo` still applies the Kotlin Gradle Plugin. The build succeeds today; upgrade the plugin when it supports Flutter's built-in Kotlin.
 - Kotlin incremental compilation is disabled in `android/gradle.properties` because the pub cache and project are on different drives, which otherwise breaks the build with a "different roots" cache error.
+- The universal APK is large because it includes MediaPipe native libraries for three ABIs. Use the AAB for Play and split APKs for small test installs.
+- The 521 MiB model download and live MediaPipe generation still need a final test on a real phone. Test low storage, no internet, cancel, background, and retry before publishing.

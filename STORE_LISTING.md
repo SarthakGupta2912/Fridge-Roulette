@@ -9,7 +9,7 @@ Ready-to-paste text for Fridge Roulette. Replace the placeholders in angle brack
 | App name | Fridge Roulette |
 | Package | `com.sarthakgupta.fridgeroulette` |
 | Category | Education (alternative: Entertainment) |
-| Tags | Cooking, Kids, Offline, Food, Family |
+| Tags | Cooking, Kids, Recipes, Food, Family |
 | Pricing | Free |
 | Ads | No |
 | In-app purchases | No |
@@ -21,22 +21,25 @@ Ready-to-paste text for Fridge Roulette. Replace the placeholders in angle brack
 ## Short description (80 characters max)
 
 ```text
-Snap your fridge, spin the wheel, and cook a kid-friendly recipe offline!
+Snap your fridge, spin the wheel, and get a kid-friendly recipe!
 ```
 
-Character count: 72.
+Character count: 64.
 
 ## Full description
 
 ```text
 What is in your fridge? Turn one photo into a fun cooking challenge!
 
-Fridge Roulette is a playful cooking game for kids and families. Take a photo of your fridge, and the app finds the food right on your phone. Spin the wheel and get a simple recipe made from what you already have. No account. No ads. No internet needed.
+Fridge Roulette is a playful cooking game for kids and families. Take a photo of your fridge, and the app finds the food right on your phone. Spin the wheel and the AI chef writes a brand-new recipe from what you already have. No account. No ads. No tracking.
 
 HOW IT WORKS
 1. Snap a photo of your fridge or pick one from your gallery.
 2. Check the food list. Tap a food to remove it, or add anything the app missed.
-3. Spin the wheel and cook the recipe challenge!
+3. Spin the wheel and watch the chef write a recipe just for you!
+
+A FRESH RECIPE EVERY TIME
+The AI chef is a small language model that runs on your phone. It mixes your foods with a silly chef style and a fun twist every time. It remembers the last three recipe names so it does not repeat the same idea. If you skip the one-time download, the Quick chef still makes a simple recipe without AI.
 
 BUILT FOR KIDS
 * Big buttons and short, easy steps
@@ -47,26 +50,29 @@ BUILT FOR KIDS
 * Looks great on phones and tablets, portrait or landscape
 
 REAL FOOD, REAL IDEAS
-* 70 family-friendly recipes
 * 48 foods you can add by hand
 * Recipes only use food you actually have
-* The wheel avoids repeating the last three recipes
-* If no full recipe fits, it invents a simple two-food snack
 * Pantry basics like salt, oil, and water are assumed
+* No alcohol, and meat, fish, and eggs must be fully cooked
+* A grown-up is reminded to help with knives and hot things
+* If the AI is unavailable, the Quick chef saves the day
 
-FULLY OFFLINE AND PRIVATE
-* The food finder is inside the app
-* The app has no internet permission
-* Photos stay on your device
+ONE SMALL DOWNLOAD, THEN OFFLINE
+The AI chef is about 521 MB and is not inside the app. Download it once on Wi-Fi, keep some free space, and then it works without internet. You can delete it anytime in Settings to free the space. The food finder is already inside the app, so it never needs a download.
+
+PRIVATE BY DESIGN
+* No personal data is collected
+* Internet is used only once to download the AI recipe model
+* Photos and food lists stay on your device
 * No accounts, no tracking, no analytics, no ads
 * No camera permission needed: your phone's camera app takes the picture
 
 IMPORTANT
-The food finder knows common foods like bananas, apples, oranges, broccoli, carrots, sandwiches, pizza, hot dogs, donuts, cake, and drinks. It may miss other items, so the hand-add list is always there. Always check food for allergies and ask a grown-up for help with knives and hot things.
+The food finder knows common foods like bananas, apples, oranges, broccoli, carrots, sandwiches, pizza, hot dogs, donuts, cake, and drinks. It may miss other items, so the hand-add list is always there. AI recipes are generated on the device and should be checked by a grown-up. Always check food for allergies and ask a grown-up for help with knives and hot things.
 
 Fridge Roulette is a cooking game, not medical or nutrition advice.
 
-Made with Flutter and an on-device YOLO model. Source code is available under the AGPL-3.0 license.
+Made with Flutter, an on-device YOLO food finder, and the Qwen2.5 0.5B Instruct model (Apache-2.0). Source code is available under the AGPL-3.0 license.
 ```
 
 ## Graphics checklist
@@ -84,8 +90,8 @@ Screenshot captions to use in the listing:
 1. "One photo is all it takes"
 2. "Check the food, fix the list"
 3. "Spin for a surprise recipe"
-4. "Simple steps made for kids"
-5. "Works offline, even in airplane mode"
+4. "The AI chef writes it live"
+5. "Simple steps made for kids"
 6. "Big buttons, friendly words"
 
 ## Data safety answers
@@ -93,8 +99,8 @@ Screenshot captions to use in the listing:
 | Question | Answer |
 | --- | --- |
 | Does your app collect or share any required user data types? | No |
-| Is all user data encrypted in transit? | Not applicable, no data is transmitted |
-| Does your app provide a way for users to request data deletion? | Not applicable, no data is stored off-device |
+| Is all user data encrypted in transit? | The only network request is the model download over HTTPS; no user data is sent |
+| Does your app provide a way for users to request data deletion? | Yes, the downloaded model can be deleted in Settings. No user data is stored off-device |
 | Photos | Accessed on-device only, never uploaded |
 | Approximate location, precise location | Not collected |
 | Personal info, financial info, health info | Not collected |
@@ -103,23 +109,27 @@ Screenshot captions to use in the listing:
 | Device or other IDs | Not collected by the app |
 | Crash logs / diagnostics | Not collected (no crash reporting SDK) |
 | Advertising or tracking | None |
+| Internet use | One-time download of the AI recipe model from Hugging Face only |
 
-The only permission in the release manifest is the app's own dynamically generated receiver permission. There is no INTERNET, CAMERA, location, storage, notification, or background-service permission.
+**Data Safety text to use:** “No personal data is collected. Internet is used only once to download the AI recipe model.”
+
+The release manifest asks for `INTERNET`, `ACCESS_NETWORK_STATE`, and `WAKE_LOCK` for the one-time model download. It does not ask for camera, location, storage, microphone, notification, or foreground-service permission. The app also declares a private Android permission that AndroidX uses to protect its own broadcast receivers.
 
 ## Content rating questionnaire notes
 
 - Violence, blood, sexual content, nudity, profanity, drugs, alcohol, tobacco, gambling: **No**.
-- User-generated content, chat, sharing, external links: **No** (the Home screen has no links; only the store description links to source).
+- User-generated content, chat, sharing, external links: **No** (the app has no external links; only the store description links to source).
 - Simulated gambling: **No**. The "wheel" is a recipe picker, not a betting mechanic.
 - Ads: **No**.
 - Purchases: **No**.
 - The app gives cooking instructions; it is not medical advice. Add "Ask a grown-up" context in the review notes if asked.
+- AI-generated recipes: explain in the review notes that the model runs on-device and a grown-up should check allergies and cooking steps.
 
 ## Target audience and Families
 
 The app is designed for children around 6-12 and their families.
 
-- Select the **Families** target audience only if you are ready to follow the Families policy. The app already meets the main requirements: no ads, no purchases, no data collection, no external links, and a privacy policy.
+- Select the **Families** target audience only if you are ready to follow the Families policy. The app already meets the main requirements: no ads, no purchases, no personal data collection, and a privacy policy.
 - Do not use the "Teacher approved" badge unless you apply separately.
 - Keep the store listing free of links to social media or external websites if you want the simplest review.
 
@@ -131,13 +141,9 @@ The app is designed for children around 6-12 and their families.
 First release!
 * Snap a fridge photo and find food on-device
 * Check and edit the food list
-* Spin for one of 70 kid-friendly recipes
-* Works fully offline with no ads or accounts
+* Spin for a live AI recipe written on your phone
+* The AI chef downloads once, then works offline
+* Quick chef fallback works without the AI model
+* Kid-friendly safety notes and a grown-up reminder
 * Light, dark, phone, and tablet layouts
 ```
-
-## ASO keyword ideas
-
-fridge, recipe, cooking, kids cooking, food detective, what's in my fridge, offline recipe app, family cooking, food waste, leftover ideas, cooking game for kids, kitchen helper, pantry, snack ideas
-
-Do not stuff keywords into the full description; the paragraph above is already readable and keyword-aware.
