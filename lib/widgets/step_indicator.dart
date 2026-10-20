@@ -182,7 +182,7 @@ class _HowStep extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 4),
+      padding: const EdgeInsets.symmetric(horizontal: 2),
       child: Column(
         children: [
           ExcludeSemantics(
@@ -192,9 +192,10 @@ class _HowStep extends StatelessWidget {
           Text(
             text,
             textAlign: TextAlign.center,
+            // Small caption text keeps whole words intact at 1.5x text scale.
             style: Theme.of(
               context,
-            ).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w700),
+            ).textTheme.bodySmall?.copyWith(fontWeight: FontWeight.w700),
           ),
         ],
       ),

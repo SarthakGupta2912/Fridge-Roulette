@@ -609,10 +609,10 @@ packages:
     dependency: "direct main"
     description:
       name: ultralytics_yolo
-      sha256: aebf5062ab3ab71cabdcb611403afa2d63008ebcab80d72c8eda331ce3cf757b
+      sha256: "0ea34ddb7cf51e7140eb06a85c33c58bdf65c18d123d21cbab993ae231f144b3"
       url: "https://pub.dev"
     source: hosted
-    version: "0.5.1"
+    version: "0.6.16"
   url_launcher:
     dependency: transitive
     description:

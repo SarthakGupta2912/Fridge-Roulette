@@ -11,6 +11,16 @@
 -keep interface com.google.ai.edge.litert.** { *; }
 -dontwarn com.google.ai.edge.litert.**
 
+# LiteRT pulls in Play Asset Delivery, which pulls in WorkManager. WorkManager
+# opens its Room database by name at startup, so R8 must not rename these.
+-keep class androidx.work.impl.WorkDatabase { *; }
+-keep class androidx.work.impl.WorkDatabase_Impl { *; }
+-keep class androidx.work.impl.WorkDatabase_Impl$* { *; }
+-keep class * extends androidx.room.RoomDatabase { *; }
+-keepclassmembers class * extends androidx.room.RoomDatabase {
+    <init>();
+}
+
 # Older TensorFlow Lite metadata readers use reflection.
 -keep class org.tensorflow.** { *; }
 -keep interface org.tensorflow.** { *; }

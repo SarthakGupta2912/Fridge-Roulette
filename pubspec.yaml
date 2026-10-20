@@ -12,7 +12,7 @@ dependencies:
 
   # The official Ultralytics plugin runs the bundled YOLO model on the phone.
   # The app never downloads a model, so it works fully offline.
-  ultralytics_yolo: 0.5.1
+  ultralytics_yolo: 0.6.16
 
   # Used only to open the system camera or gallery. It needs no network.
   image_picker: ^1.2.4
