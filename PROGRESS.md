@@ -55,7 +55,7 @@ This file is my checklist. I update it after every phase.
 
 ## Phase 8 - Test, build and docs
 - [x] flutter analyze clean
-- [x] flutter test passing (23 tests)
+- [x] flutter test passing (25 tests)
 - [x] Debug APK built
 - [x] Release APK built
 - [x] Release AAB built
@@ -69,7 +69,7 @@ This file is my checklist. I update it after every phase.
 | --- | --- |
 | Flutter / Dart | 3.44.6 / 3.12.2 |
 | Analyze | No issues |
-| Tests | 23 passed |
+| Tests | 25 passed |
 | Debug APK | `build/app/outputs/flutter-apk/app-debug.apk` (182.02 MB) |
 | Release APK | `build/app/outputs/flutter-apk/app-release.apk` (74.54 MB) |
 | Release AAB | `build/app/outputs/bundle/release/app-release.aab` (64.42 MB) |

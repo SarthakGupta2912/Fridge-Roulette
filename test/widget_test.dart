@@ -313,6 +313,25 @@ void main() {
       expectNoLayoutError(tester);
     });
 
+    testWidgets('no food found shows the friendly empty card', (
+      WidgetTester tester,
+    ) async {
+      await pumpScreen(
+        tester,
+        CheckFoodScreen(
+          detector: FakeDetector(<FoodDetection>[]),
+          picker: RecipePicker(recipes: <Recipe>[testRecipe]),
+          photoBytes: testPhoto,
+        ),
+        textScale: 1.5,
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text(AppStrings.noFoodTitle), findsOneWidget);
+      expect(find.text(AppStrings.addFoodByHand), findsOneWidget);
+      expectNoLayoutError(tester);
+    });
+
     testWidgets('spins to the roulette screen', (WidgetTester tester) async {
       await pumpScreen(
         tester,
@@ -366,6 +385,27 @@ void main() {
       expect(find.text(AppStrings.recipeTitle), findsOneWidget);
       expect(find.text(testRecipe.steps.first), findsOneWidget);
       expect(find.text(AppStrings.safetyNote), findsOneWidget);
+      expectNoLayoutError(tester);
+    });
+
+    testWidgets('foods that need cooking show the no-recipe message', (
+      WidgetTester tester,
+    ) async {
+      await pumpScreen(
+        tester,
+        RouletteScreen(
+          picker: RecipePicker(recipes: <Recipe>[]),
+          foodIds: <String>['onion', 'potato'],
+        ),
+        textScale: 1.5,
+      );
+
+      await tapVisible(tester, find.text(AppStrings.spinTheWheel));
+      await tester.pump(const Duration(milliseconds: 1700));
+      await tester.pumpAndSettle();
+
+      expect(find.text(AppStrings.rouletteNoRecipe), findsOneWidget);
+      expect(find.text(AppStrings.addMoreFood), findsOneWidget);
       expectNoLayoutError(tester);
     });
 
