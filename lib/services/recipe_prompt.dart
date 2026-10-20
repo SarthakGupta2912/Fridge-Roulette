@@ -140,6 +140,65 @@ class RecipePromptBuilder {
   }
 }
 
+/// Makes the model's words readable while it is still writing.
+///
+/// Small models sometimes send the two characters `\n` instead of a real line
+/// break, or add HTML tags such as `<br>`. This turns those into plain text so
+/// the child never sees escape codes or tags on screen.
+///
+/// Set [streaming] while tokens are still arriving. It hides a half-finished
+/// tag at the very end, such as `<br` or `<|im_end`, instead of flashing it.
+String plainRecipeText(String raw, {bool streaming = false}) {
+  String text = raw
+      // ChatML markers such as <|im_end|>.
+      .replaceAll(RegExp(r'<\|[^>]*\|>'), '')
+      // HTML line breaks and block tags become real line breaks.
+      .replaceAll(RegExp(r'<\s*br\s*/?\s*>', caseSensitive: false), '\n')
+      .replaceAll(
+        RegExp(r'<\s*/\s*(?:p|div|li|h[1-6]|tr)\s*>', caseSensitive: false),
+        '\n',
+      )
+      .replaceAll(
+        RegExp(r'<\s*(?:p|div|li|h[1-6]|tr)\b[^>]*>', caseSensitive: false),
+        '\n',
+      )
+      .replaceAll(RegExp(r'<[^>]*>'), '')
+      // Common HTML entities.
+      .replaceAll('&nbsp;', ' ')
+      .replaceAll('&amp;', '&')
+      .replaceAll('&lt;', '<')
+      .replaceAll('&gt;', '>')
+      .replaceAll('&quot;', '"')
+      .replaceAll('&#39;', "'")
+      .replaceAll('&apos;', "'")
+      // Literal escape sequences. The regex allows the model to double them.
+      .replaceAll(RegExp(r'\\+r\\+n'), '\n')
+      .replaceAll(RegExp(r'\\+n'), '\n')
+      .replaceAll(RegExp(r'\\+r'), '\n')
+      .replaceAll(RegExp(r'\\+t'), ' ')
+      // Very light Markdown cleanup.
+      .replaceAll('**', '')
+      .replaceAll('__', '')
+      .replaceAll('`', '')
+      .replaceAll(RegExp(r'^\s*#+\s*', multiLine: true), '');
+
+  if (streaming) {
+    // Do not show a tag or escape that is still arriving.
+    text = text
+        .replaceFirst(RegExp(r'<[/!?a-zA-Z|][^>]*$'), '')
+        .replaceFirst(RegExp(r'&[a-zA-Z#0-9]*$'), '')
+        .replaceFirst(RegExp(r'\\+$'), '');
+  }
+
+  text = text
+      .replaceAll('\r\n', '\n')
+      .replaceAll('\r', '\n')
+      .replaceAll(RegExp(r'[ \t]+\n'), '\n')
+      .replaceAll(RegExp(r'\n{3,}'), '\n\n');
+
+  return streaming ? text.trimLeft() : text.trim();
+}
+
 /// Reads the model's plain text into a [Recipe].
 ///
 /// The parser is deliberately forgiving: small models sometimes forget an
@@ -151,20 +210,10 @@ Recipe? parseRecipeText(
   bool isAi = false,
   List<String> foods = const <String>[],
 }) {
-  final String text = raw
-      // Small models sometimes write the two characters \n instead of a
-      // real line break.
-      .replaceAll(r'\r\n', '\n')
-      .replaceAll(r'\n', '\n')
-      .replaceAll(r'\t', ' ')
-      .replaceFirst(
-        RegExp(r'^\s*(assistant|user|system)\s*:?\s*', caseSensitive: false),
-        '',
-      )
-      .replaceAll('\r\n', '\n')
-      .replaceAll('\r', '\n')
-      .replaceAll(RegExp(r'<[^>]+>'), '')
-      .trim();
+  final String text = plainRecipeText(raw).replaceFirst(
+    RegExp(r'^\s*(assistant|user|system)\s*:?\s*', caseSensitive: false),
+    '',
+  );
   if (text.isEmpty) {
     return null;
   }

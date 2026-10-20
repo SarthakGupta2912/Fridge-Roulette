@@ -52,7 +52,7 @@ class AppStrings {
   static const String aboutBody =
       'Fridge Roulette is a kid-friendly cooking game. No account, no ads, '
       'no analytics. The internet is used only once to download the AI chef.';
-  static const String appVersion = 'Version 1.0.0';
+  static const String appVersion = 'Version 1.0.1';
   static const String privacyPromise =
       'No personal data is collected. Your photos and food list stay on this '
       'phone.';
@@ -69,9 +69,22 @@ class AppStrings {
       'Please keep about 750 MB free. You can delete the chef brain later.';
   static const String downloadButton = 'Download AI chef';
   static const String downloadTryAgain = 'Try again';
-  static const String downloadStarting = 'Starting the download...';
+  static const String downloadStarting = 'Connecting to the download server...';
+  static const String downloadPreparing = 'Getting ready...';
+  static const String downloadStartingHint =
+      'This can take a few seconds. Keep this screen open.';
   static const String downloadNotificationHint =
-      'A progress notification will appear. Allow notifications if Android asks.';
+      'A progress notification will show how the download is going.';
+  static const String downloadKeepOpenHint =
+      'Notifications are off, so keep this screen open while the chef brain '
+      'downloads.';
+  static const String downloadNotificationsTitle = 'Show download progress?';
+  static const String downloadNotificationsBody =
+      'Allow notifications to see the chef brain download even if you switch '
+      'apps. Android will show a permission pop-up. Tap Allow, then come back '
+      'to this screen. You can say Not now and still download.';
+  static const String downloadNotificationsAllow = 'Allow notifications';
+  static const String downloadNotificationsSkip = 'Not now';
   static const String downloadCancel = 'Cancel download';
   static const String downloadReadyTitle = 'Your AI chef is ready!';
   static const String downloadReadyBody =

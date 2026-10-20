@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:io';
 
+import 'package:background_downloader/background_downloader.dart' as downloader;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_edge_ai/flutter_edge_ai.dart';
@@ -128,6 +129,7 @@ class ChefBrain extends ChangeNotifier {
   CancelToken? _cancelToken;
   Future<void>? _initFuture;
   bool _initialized = false;
+  bool _usesForeground = true;
 
   ChefBrainStatus get status => _status;
   String? get error => _error;
@@ -135,6 +137,53 @@ class ChefBrain extends ChangeNotifier {
   int get progress => _progress;
   bool get isReady => _status == ChefBrainStatus.ready;
   bool get isDownloading => _status == ChefBrainStatus.downloading;
+
+  /// Whether the current (or next) download can show its progress
+  /// notification and run in a foreground service.
+  bool get usesForeground => _usesForeground;
+
+  /// True when Android will let us show the download notification.
+  ///
+  /// Older Android versions do not need this permission, and the tests run on
+  /// a desktop, so they get a friendly `true` too.
+  Future<bool> hasNotificationPermission() async {
+    if (!Platform.isAndroid) {
+      return true;
+    }
+    try {
+      final downloader.PermissionStatus status =
+          await downloader.FileDownloader().permissions.status(
+            downloader.PermissionType.notifications,
+          );
+      return status == downloader.PermissionStatus.granted;
+    } catch (error) {
+      debugPrint('Could not check the notification permission: $error');
+      return false;
+    }
+  }
+
+  /// Asks Android for notification permission before the download starts.
+  ///
+  /// Asking here, while the download screen is already open, avoids the
+  /// downloader asking unexpectedly in the middle of starting the transfer.
+  Future<bool> requestNotificationPermission() async {
+    if (!Platform.isAndroid) {
+      return true;
+    }
+    try {
+      final downloader.PermissionStatus status =
+          await downloader.FileDownloader().permissions
+              .request(downloader.PermissionType.notifications)
+              .timeout(
+                const Duration(seconds: 30),
+                onTimeout: () => downloader.PermissionStatus.requestError,
+              );
+      return status == downloader.PermissionStatus.granted;
+    } catch (error) {
+      debugPrint('Could not ask for the notification permission: $error');
+      return false;
+    }
+  }
 
   /// Starts the plugin once. Safe to call more than once, and safe to retry
   /// after a failure.
@@ -186,10 +235,14 @@ class ChefBrain extends ChangeNotifier {
   }
 
   /// Downloads the model once. Throws [ChefBrainException] on failure.
-  Future<void> download() async {
+  ///
+  /// Set [useForeground] to false when notification permission is not
+  /// available. The download still works, but the screen must stay open.
+  Future<void> download({bool useForeground = true}) async {
     if (_status == ChefBrainStatus.downloading) {
       return;
     }
+    _usesForeground = useForeground;
 
     if (!_initialized) {
       await initialize();
@@ -219,9 +272,9 @@ class ChefBrain extends ChangeNotifier {
             fileType: ModelFileType.task,
           )
           // A foreground service keeps the 500 MB download alive and shows a
-          // progress notification. The plugin also asks for notification
-          // permission on Android 13 and newer.
-          .fromNetwork(ModelInfo.downloadUrl, foreground: true)
+          // progress notification. We ask for notification permission before
+          // calling this, so the download does not pause on a surprise prompt.
+          .fromNetwork(ModelInfo.downloadUrl, foreground: useForeground)
           .withProgress((int percent) {
             _progress = percent.clamp(0, 100);
             notifyListeners();

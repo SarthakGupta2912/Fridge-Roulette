@@ -57,17 +57,27 @@ class FakeRecipeGenerator extends RecipeGenerator {
     this.aiReady = false,
     this.modelText = goodModelText,
     this.quick = quickRecipe,
+    this.customStream,
   });
 
   final bool aiReady;
   final String modelText;
   final Recipe quick;
+  final Stream<String>? customStream;
 
   @override
   Future<bool> isAiReady() async => aiReady;
 
   @override
-  Stream<String> makeRecipe(List<String> foods) async* {
+  Stream<String> makeRecipe(List<String> foods) {
+    final Stream<String>? custom = customStream;
+    if (custom != null) {
+      return custom;
+    }
+    return _streamWords();
+  }
+
+  Stream<String> _streamWords() async* {
     final List<String> parts = modelText.split(' ');
     for (int index = 0; index < parts.length; index++) {
       yield index == 0 ? parts[index] : ' ${parts[index]}';
@@ -99,9 +109,25 @@ class FakeChefBrain extends ChefBrain {
   int _fakeProgress = 0;
   ChefBrainProblem? _fakeProblem;
   bool downloadCalled = false;
+  bool notificationPermissionGranted = true;
+  bool notificationRequestGranted = true;
+  bool _fakeUsesForeground = true;
 
   @override
   ChefBrainStatus get status => _fakeStatus;
+
+  @override
+  bool get usesForeground => _fakeUsesForeground;
+
+  @override
+  Future<bool> hasNotificationPermission() async =>
+      notificationPermissionGranted;
+
+  @override
+  Future<bool> requestNotificationPermission() async {
+    notificationPermissionGranted = notificationRequestGranted;
+    return notificationRequestGranted;
+  }
 
   @override
   int get progress => _fakeProgress;
@@ -119,8 +145,9 @@ class FakeChefBrain extends ChefBrain {
   Future<void> refresh() async {}
 
   @override
-  Future<void> download() async {
+  Future<void> download({bool useForeground = true}) async {
     downloadCalled = true;
+    _fakeUsesForeground = useForeground;
     _fakeStatus = ChefBrainStatus.downloading;
     _fakeProgress = 0;
     _fakeProblem = null;
@@ -581,6 +608,44 @@ void main() {
       expectNoLayoutError(tester);
     });
 
+    testWidgets('live AI text hides escape codes and HTML tags', (
+      WidgetTester tester,
+    ) async {
+      final StreamController<String> controller = StreamController<String>();
+      addTearDown(controller.close);
+      await pumpScreen(
+        tester,
+        RecipeScreen(
+          chefBrain: readyBrain(),
+          generator: FakeRecipeGenerator(
+            aiReady: true,
+            customStream: controller.stream,
+          ),
+          foodIds: <String>['banana', 'apple'],
+        ),
+        textScale: 1.5,
+      );
+      for (int i = 0; i < 4; i++) {
+        await tester.pump();
+      }
+
+      controller.add(r'TITLE: Test\nEMOJI: 🍌<br>STEPS:');
+      await tester.pump();
+
+      final Finder live = find.textContaining('TITLE: Test');
+      expect(live, findsOneWidget);
+      final Text text = tester.widget<Text>(live);
+      expect(text.data, contains('TITLE: Test\nEMOJI: 🍌\nSTEPS:'));
+      expect(text.data, isNot(contains(r'\n')));
+      expect(text.data, isNot(contains('<br')));
+      expect(text.data, contains('▍'));
+
+      controller.add(' 1. Wash the fruit.');
+      await tester.pump();
+      expect(find.textContaining('Wash the fruit.'), findsOneWidget);
+      expectNoLayoutError(tester);
+    });
+
     testWidgets('broken AI text is shown as friendly raw notes', (
       WidgetTester tester,
     ) async {
@@ -733,6 +798,67 @@ void main() {
       expect(find.textContaining('42%'), findsOneWidget);
       bar = tester.widget(find.byType(LinearProgressIndicator));
       expect(bar.value, closeTo(0.42, 0.001));
+      expectNoLayoutError(tester);
+    });
+
+    testWidgets('asks for notification permission before the download', (
+      WidgetTester tester,
+    ) async {
+      final FakeChefBrain brain = FakeChefBrain()
+        ..notificationPermissionGranted = false
+        ..notificationRequestGranted = true;
+      await pumpScreen(
+        tester,
+        ModelDownloadScreen(chefBrain: brain),
+        size: const Size(360, 640),
+        textScale: 1.5,
+      );
+      await tester.pump();
+
+      await tapVisible(tester, find.text(AppStrings.downloadButton));
+      await tester.pump();
+      await tester.pump();
+
+      expect(find.text(AppStrings.downloadNotificationsTitle), findsOneWidget);
+      expect(find.text(AppStrings.downloadNotificationsBody), findsOneWidget);
+
+      await tester.tap(find.text(AppStrings.downloadNotificationsAllow));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 400));
+
+      expect(brain.downloadCalled, isTrue);
+      expect(brain.notificationPermissionGranted, isTrue);
+      expect(brain.usesForeground, isTrue);
+      expect(find.text(AppStrings.downloadNotificationHint), findsOneWidget);
+      expectNoLayoutError(tester);
+    });
+
+    testWidgets('keeps the screen-open hint when notifications are skipped', (
+      WidgetTester tester,
+    ) async {
+      final FakeChefBrain brain = FakeChefBrain()
+        ..notificationPermissionGranted = false
+        ..notificationRequestGranted = false;
+      await pumpScreen(
+        tester,
+        ModelDownloadScreen(chefBrain: brain),
+        size: const Size(360, 640),
+        textScale: 1.5,
+      );
+      await tester.pump();
+
+      await tapVisible(tester, find.text(AppStrings.downloadButton));
+      await tester.pump();
+      await tester.pump();
+
+      await tester.tap(find.text(AppStrings.downloadNotificationsSkip));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 400));
+
+      expect(brain.downloadCalled, isTrue);
+      expect(brain.usesForeground, isFalse);
+      expect(find.text(AppStrings.downloadKeepOpenHint), findsOneWidget);
+      expect(find.text(AppStrings.downloadNotificationHint), findsNothing);
       expectNoLayoutError(tester);
     });
 

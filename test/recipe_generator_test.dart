@@ -179,6 +179,46 @@ TIP: Yum!
     });
   });
 
+  group('plain text while writing', () {
+    test('turns literal escapes and HTML tags into readable lines', () {
+      const String raw =
+          r'TITLE: Fun Bowl\nEMOJI: 🍌<br>TIME: 5\n'
+          r'STEPS:</p>1. Wash the fruit.&nbsp;2. Mix it.';
+      final String text = plainRecipeText(raw);
+
+      expect(text, contains('TITLE: Fun Bowl\nEMOJI: 🍌\nTIME: 5'));
+      expect(text, contains('STEPS:\n1. Wash the fruit. 2. Mix it.'));
+      expect(text, isNot(contains(r'\n')));
+      expect(text, isNot(contains('<br')));
+      expect(text, isNot(contains('</p>')));
+      expect(text, isNot(contains('&nbsp;')));
+    });
+
+    test('hides a half-finished tag or escape while streaming', () {
+      expect(
+        plainRecipeText('TITLE: Fun <|im_end', streaming: true),
+        'TITLE: Fun ',
+      );
+      expect(plainRecipeText('TITLE: Fun <br', streaming: true), 'TITLE: Fun ');
+      expect(plainRecipeText('TITLE: Fun\\', streaming: true), 'TITLE: Fun');
+    });
+
+    test('parser still reads the cleaned words', () {
+      const String raw =
+          r'TITLE: Apple Smile\nEMOJI: 🍎<br>TIME: 7\n'
+          r'LEVEL: Easy\nSTEPS:<br>1. Wash the apple.\n'
+          r'2. Ask a grown-up to slice it.\n3. Make a smile.\n'
+          r'4. Eat it.<br>TIP: Yum!';
+      final Recipe? recipe = parseRecipeText(raw);
+
+      expect(recipe, isNotNull);
+      expect(recipe!.title, 'Apple Smile');
+      expect(recipe.steps, hasLength(4));
+      expect(recipe.steps.first, 'Wash the apple.');
+      expect(recipe.tip, 'Yum!');
+    });
+  });
+
   group('quick chef', () {
     test('uses the child foods and always changes the title', () {
       final SimpleRecipeGenerator chef = SimpleRecipeGenerator(

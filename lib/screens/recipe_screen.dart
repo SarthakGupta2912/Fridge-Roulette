@@ -45,6 +45,9 @@ class _RecipeScreenState extends State<RecipeScreen>
   Timer? _backgroundTimer;
   int _run = 0;
 
+  /// The words as the child should see them, without model tags or escapes.
+  String get _plainRaw => plainRecipeText(_raw, streaming: _loading);
+
   List<String> get _foodNames {
     final List<String> names = <String>[];
     for (final String id in widget.foodIds) {
@@ -173,7 +176,7 @@ class _RecipeScreenState extends State<RecipeScreen>
     if (!mounted || run != _run) {
       return;
     }
-    if (_raw.trim().isEmpty) {
+    if (_plainRaw.trim().isEmpty) {
       _showQuickChef(notice: AppStrings.aiHiccup);
       return;
     }
@@ -189,7 +192,7 @@ class _RecipeScreenState extends State<RecipeScreen>
       _showQuickChef(notice: AppStrings.aiExtraFood);
       return;
     }
-    if (parsed == null && !RegExp(r'[A-Za-z]').hasMatch(_raw)) {
+    if (parsed == null && !RegExp(r'[A-Za-z]').hasMatch(_plainRaw)) {
       // The model sometimes writes only spaces or newline tokens. There is
       // nothing for the child to read, so use the reliable Quick chef.
       _showQuickChef(notice: AppStrings.aiHiccup);
@@ -230,7 +233,7 @@ class _RecipeScreenState extends State<RecipeScreen>
       return;
     }
 
-    final Recipe? parsed = _raw.trim().isEmpty
+    final Recipe? parsed = _plainRaw.trim().isEmpty
         ? null
         : parseRecipeText(_raw, isAi: _usingAi, foods: _foodNames);
     setState(() {
@@ -240,7 +243,7 @@ class _RecipeScreenState extends State<RecipeScreen>
         _recipe = parsed;
         _rawMode = false;
         _problem = null;
-      } else if (_raw.trim().isNotEmpty) {
+      } else if (_plainRaw.trim().isNotEmpty) {
         _rawMode = true;
         _problem = null;
       } else {
@@ -401,7 +404,7 @@ class _RecipeScreenState extends State<RecipeScreen>
               textAlign: TextAlign.center,
               style: Theme.of(context).textTheme.bodyLarge,
             ),
-            if (_raw.trim().isNotEmpty) ...<Widget>[
+            if (_plainRaw.trim().isNotEmpty) ...<Widget>[
               const SizedBox(height: 16),
               _buildLiveText(context),
             ],
@@ -462,7 +465,7 @@ class _RecipeScreenState extends State<RecipeScreen>
           ),
           const SizedBox(height: 6),
           Text(
-            '${_raw.trimLeft()} ▍',
+            '${_plainRaw.trimLeft()} ▍',
             style: Theme.of(context).textTheme.bodyMedium,
           ),
         ],
@@ -491,7 +494,10 @@ class _RecipeScreenState extends State<RecipeScreen>
             style: Theme.of(context).textTheme.bodyMedium,
           ),
           const SizedBox(height: 10),
-          SelectableText(_raw, style: Theme.of(context).textTheme.bodyMedium),
+          SelectableText(
+            _plainRaw,
+            style: Theme.of(context).textTheme.bodyMedium,
+          ),
         ],
       ),
     );

@@ -28,6 +28,8 @@ class ModelDownloadScreen extends StatefulWidget {
 
 class _ModelDownloadScreenState extends State<ModelDownloadScreen> {
   ChefBrainProblem? _problem;
+  bool _askedForNotifications = false;
+  bool _starting = false;
 
   ChefBrainProblem? get _shownProblem {
     if (_problem != null) {
@@ -61,9 +63,44 @@ class _ModelDownloadScreenState extends State<ModelDownloadScreen> {
   }
 
   Future<void> _download() async {
-    setState(() => _problem = null);
+    if (_starting) {
+      return;
+    }
+    setState(() {
+      _problem = null;
+      _starting = true;
+    });
+
     try {
-      await widget.chefBrain.download();
+      // Ask for notification permission now, with our own friendly words,
+      // instead of letting the downloader surprise the child mid-start.
+      bool useForeground = await widget.chefBrain.hasNotificationPermission();
+      if (!mounted) {
+        return;
+      }
+      if (!useForeground && !_askedForNotifications) {
+        _askedForNotifications = true;
+        final bool? allow = await showFriendlyDialog(
+          context,
+          emoji: '🔔',
+          title: AppStrings.downloadNotificationsTitle,
+          body: AppStrings.downloadNotificationsBody,
+          primaryLabel: AppStrings.downloadNotificationsAllow,
+          secondaryLabel: AppStrings.downloadNotificationsSkip,
+        );
+        if (!mounted) {
+          return;
+        }
+        if (allow == true) {
+          useForeground = await widget.chefBrain
+              .requestNotificationPermission();
+          if (!mounted) {
+            return;
+          }
+        }
+      }
+
+      await widget.chefBrain.download(useForeground: useForeground);
     } catch (error) {
       if (!mounted) {
         return;
@@ -73,6 +110,10 @@ class _ModelDownloadScreenState extends State<ModelDownloadScreen> {
             ? error.problem
             : classifyDownloadError(error);
       });
+    } finally {
+      if (mounted) {
+        setState(() => _starting = false);
+      }
     }
   }
 
@@ -300,11 +341,14 @@ class _ModelDownloadScreenState extends State<ModelDownloadScreen> {
         ),
         const SizedBox(height: 16),
         BigActionButton(
-          label: failed
+          label: _starting
+              ? AppStrings.downloadPreparing
+              : failed
               ? AppStrings.downloadTryAgain
               : AppStrings.downloadButton,
           icon: failed ? Icons.refresh : Icons.download,
-          onPressed: _download,
+          busy: _starting,
+          onPressed: _starting ? null : _download,
         ),
         if (widget.canSkip) ...<Widget>[
           const SizedBox(height: 10),
@@ -372,19 +416,31 @@ class _ModelDownloadScreenState extends State<ModelDownloadScreen> {
               style: Theme.of(context).textTheme.bodyMedium,
             ),
           ),
+          if (starting) ...<Widget>[
+            const SizedBox(height: 3),
+            Text(
+              AppStrings.downloadStartingHint,
+              textAlign: TextAlign.center,
+              style: Theme.of(context).textTheme.bodySmall,
+            ),
+          ],
           const SizedBox(height: 10),
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: <Widget>[
               Icon(
-                Icons.notifications_active_outlined,
+                widget.chefBrain.usesForeground
+                    ? Icons.notifications_active_outlined
+                    : Icons.screen_lock_portrait_outlined,
                 size: 20,
                 color: colors.onSecondaryContainer,
               ),
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
-                  AppStrings.downloadNotificationHint,
+                  widget.chefBrain.usesForeground
+                      ? AppStrings.downloadNotificationHint
+                      : AppStrings.downloadKeepOpenHint,
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
                     color: colors.onSecondaryContainer,
                   ),

@@ -21,6 +21,9 @@ dependencies:
   flutter_edge_ai: ^2.4.1
   flutter_edge_ai_mediapipe: ^1.2.2
   google_mlkit_text_recognition: 0.17.1
+  # Used only to ask for the download-notification permission before the
+  # one-time chef-brain download starts. It is already included by flutter_edge_ai.
+  background_downloader: ^9.5.9
 dev_dependencies:
   flutter_test:
     sdk: flutter
