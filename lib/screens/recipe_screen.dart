@@ -183,6 +183,18 @@ class _RecipeScreenState extends State<RecipeScreen>
       isAi: _usingAi,
       foods: _foodNames,
     );
+    if (_usingAi &&
+        parsed != null &&
+        !recipeUsesOnlyAllowedFoods(parsed, _foodNames)) {
+      _showQuickChef(notice: AppStrings.aiExtraFood);
+      return;
+    }
+    if (parsed == null && !RegExp(r'[A-Za-z]').hasMatch(_raw)) {
+      // The model sometimes writes only spaces or newline tokens. There is
+      // nothing for the child to read, so use the reliable Quick chef.
+      _showQuickChef(notice: AppStrings.aiHiccup);
+      return;
+    }
     setState(() {
       _loading = false;
       if (parsed == null) {

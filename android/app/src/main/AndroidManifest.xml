@@ -6,16 +6,14 @@
     <uses-permission
         android:name="android.permission.CAMERA"
         tools:node="remove" />
-    <!-- The downloader checks the network and keeps the phone awake while the
-         one-time file finishes. There is no analytics, ads or other network use. -->
-    <!-- Library dependencies mention a foreground service for downloads.
-         This app downloads only while its own screen is open. -->
-    <uses-permission
-        android:name="android.permission.FOREGROUND_SERVICE"
-        tools:node="remove" />
-    <uses-permission
-        android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC"
-        tools:node="remove" />
+    <!-- The one-time model download runs in a foreground service so Android
+         keeps it alive and shows a progress notification. This is the only
+         network use in the app: there is no analytics, ads or other traffic. -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" />
+    <!-- Android 13 and newer ask the child before showing the download
+         notification. The download still works if they say no. -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <uses-permission
         android:name="android.permission.RECEIVE_BOOT_COMPLETED"
         tools:node="remove" />

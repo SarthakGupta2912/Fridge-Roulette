@@ -2,6 +2,17 @@
 # The Ultralytics plugin also ships its own consumer rules. These extra rules keep
 # the on-device model engine safe when R8 shrinks and renames the app.
 
+# Newer Flutter plugins (shared_preferences, path_provider) call Kotlin suspend
+# functions through JNI. JNI looks methods up by their exact descriptor, so R8
+# must not rename Continuation or the plugin classes. Without this the release
+# build fails at startup with "NoSuchMethodError ... getAll(...Continuation;)".
+-keep class kotlin.coroutines.** { *; }
+-keep class kotlin.Result** { *; }
+-keep class kotlin.Unit { *; }
+-keep class io.flutter.plugins.sharedpreferences.** { *; }
+-keep class io.flutter.plugins.pathprovider.** { *; }
+-keep class com.bbflight.background_downloader.** { *; }
+
 # The YOLO plugin talks to native code through JNI.
 -keep class com.ultralytics.yolo.** { *; }
 -keep interface com.ultralytics.yolo.** { *; }
@@ -29,6 +40,14 @@
 # The plugin reads model metadata with SnakeYAML.
 -keep class org.yaml.snakeyaml.** { *; }
 -dontwarn org.yaml.snakeyaml.**
+
+# ML Kit finds its component registrars by name from AndroidManifest metadata.
+# They are never referenced from Java/Kotlin, so R8 removes their constructors
+# unless we keep them. Without these rules OCR fails in release builds with
+# "Invalid component registrar".
+-keep class com.google.mlkit.common.internal.CommonComponentRegistrar { *; }
+-keep class com.google.mlkit.vision.common.internal.VisionCommonRegistrar { *; }
+-keep class com.google.mlkit.vision.text.internal.TextRegistrar { *; }
 
 # Fridge Roulette bundles only ML Kit's Latin text model. The OCR plugin also
 # mentions the Chinese, Devanagari, Japanese and Korean options, but those

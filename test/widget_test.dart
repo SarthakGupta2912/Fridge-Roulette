@@ -9,6 +9,7 @@ import 'package:fridge_roulette/data/ingredients.dart';
 import 'package:fridge_roulette/data/recipe.dart';
 import 'package:fridge_roulette/screens/check_food_screen.dart';
 import 'package:fridge_roulette/screens/home_screen.dart';
+import 'package:fridge_roulette/screens/model_download_screen.dart';
 import 'package:fridge_roulette/screens/recipe_screen.dart';
 import 'package:fridge_roulette/screens/roulette_screen.dart';
 import 'package:fridge_roulette/screens/settings_screen.dart';
@@ -86,6 +87,65 @@ class FakeRecipeGenerator extends RecipeGenerator {
 
 ChefBrain readyBrain() {
   return ChefBrain(initialStatus: ChefBrainStatus.ready);
+}
+
+/// A chef brain whose download can be driven by the test.
+class FakeChefBrain extends ChefBrain {
+  FakeChefBrain({ChefBrainStatus initial = ChefBrainStatus.missing})
+    : _fakeStatus = initial,
+      super(initialStatus: initial);
+
+  ChefBrainStatus _fakeStatus;
+  int _fakeProgress = 0;
+  ChefBrainProblem? _fakeProblem;
+  bool downloadCalled = false;
+
+  @override
+  ChefBrainStatus get status => _fakeStatus;
+
+  @override
+  int get progress => _fakeProgress;
+
+  @override
+  ChefBrainProblem? get problem => _fakeProblem;
+
+  @override
+  bool get isDownloading => _fakeStatus == ChefBrainStatus.downloading;
+
+  @override
+  Future<void> initialize() async {}
+
+  @override
+  Future<void> refresh() async {}
+
+  @override
+  Future<void> download() async {
+    downloadCalled = true;
+    _fakeStatus = ChefBrainStatus.downloading;
+    _fakeProgress = 0;
+    _fakeProblem = null;
+    notifyListeners();
+  }
+
+  @override
+  void cancelDownload() {
+    _fakeStatus = ChefBrainStatus.missing;
+    _fakeProgress = 0;
+    _fakeProblem = ChefBrainProblem.cancelled;
+    notifyListeners();
+  }
+
+  void setProgress(int value) {
+    _fakeProgress = value;
+    notifyListeners();
+  }
+
+  void failWith(ChefBrainProblem problem) {
+    _fakeStatus = ChefBrainStatus.failed;
+    _fakeProgress = 0;
+    _fakeProblem = problem;
+    notifyListeners();
+  }
 }
 
 /// A food finder that answers right away without loading a real model.
@@ -547,6 +607,52 @@ void main() {
       expectNoLayoutError(tester);
     });
 
+    testWidgets('blank AI text falls back to Quick chef', (
+      WidgetTester tester,
+    ) async {
+      await pumpScreen(
+        tester,
+        RecipeScreen(
+          chefBrain: readyBrain(),
+          generator: FakeRecipeGenerator(aiReady: true, modelText: '\n\n\n'),
+          foodIds: <String>['banana', 'apple'],
+        ),
+        textScale: 1.5,
+      );
+      await finishRecipe(tester);
+
+      expect(find.text(AppStrings.quickChef), findsOneWidget);
+      expect(find.text(AppStrings.aiHiccup), findsOneWidget);
+      expect(find.text(quickRecipe.title), findsOneWidget);
+      expectNoLayoutError(tester);
+    });
+
+    testWidgets('AI recipe with an invented food falls back to Quick chef', (
+      WidgetTester tester,
+    ) async {
+      await pumpScreen(
+        tester,
+        RecipeScreen(
+          chefBrain: readyBrain(),
+          generator: FakeRecipeGenerator(
+            aiReady: true,
+            modelText: goodModelText.replaceFirst(
+              'Wash the banana and the apple.',
+              'Add the pie crust and cream.',
+            ),
+          ),
+          foodIds: <String>['banana', 'apple'],
+        ),
+        textScale: 1.5,
+      );
+      await finishRecipe(tester);
+
+      expect(find.text(AppStrings.quickChef), findsOneWidget);
+      expect(find.text(AppStrings.aiExtraFood), findsOneWidget);
+      expect(find.text(quickRecipe.title), findsOneWidget);
+      expectNoLayoutError(tester);
+    });
+
     testWidgets(
       'missing model falls back to Quick chef with a download action',
       (WidgetTester tester) async {
@@ -594,6 +700,77 @@ void main() {
         },
       );
     }
+  });
+
+  group('model download', () {
+    testWidgets('shows a moving bar, then real progress', (
+      WidgetTester tester,
+    ) async {
+      final FakeChefBrain brain = FakeChefBrain();
+      await pumpScreen(
+        tester,
+        ModelDownloadScreen(chefBrain: brain),
+        size: const Size(360, 640),
+        textScale: 1.5,
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text(AppStrings.downloadButton), findsOneWidget);
+      await tapVisible(tester, find.text(AppStrings.downloadButton));
+      await tester.pump();
+
+      expect(brain.downloadCalled, isTrue);
+      expect(find.text(AppStrings.downloadStarting), findsOneWidget);
+      expect(find.text(AppStrings.downloadNotificationHint), findsOneWidget);
+      LinearProgressIndicator bar = tester.widget(
+        find.byType(LinearProgressIndicator),
+      );
+      expect(bar.value, isNull);
+
+      brain.setProgress(42);
+      await tester.pump();
+
+      expect(find.textContaining('42%'), findsOneWidget);
+      bar = tester.widget(find.byType(LinearProgressIndicator));
+      expect(bar.value, closeTo(0.42, 0.001));
+      expectNoLayoutError(tester);
+    });
+
+    testWidgets('explains a missing internet connection and offers retry', (
+      WidgetTester tester,
+    ) async {
+      final FakeChefBrain brain = FakeChefBrain()
+        ..failWith(ChefBrainProblem.noInternet);
+      await pumpScreen(
+        tester,
+        ModelDownloadScreen(chefBrain: brain),
+        size: const Size(360, 640),
+        textScale: 1.5,
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text(AppStrings.downloadNoInternetTitle), findsOneWidget);
+      expect(find.text(AppStrings.downloadNoInternetBody), findsOneWidget);
+      expect(find.text(AppStrings.downloadTryAgain), findsOneWidget);
+      expectNoLayoutError(tester);
+    });
+
+    testWidgets('explains a busy server', (WidgetTester tester) async {
+      final FakeChefBrain brain = FakeChefBrain()
+        ..failWith(ChefBrainProblem.server);
+      await pumpScreen(
+        tester,
+        ModelDownloadScreen(chefBrain: brain),
+        size: const Size(360, 640),
+        textScale: 1.5,
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text(AppStrings.downloadServerTitle), findsOneWidget);
+      expect(find.text(AppStrings.downloadServerBody), findsOneWidget);
+      expect(find.text(AppStrings.downloadTryAgain), findsOneWidget);
+      expectNoLayoutError(tester);
+    });
   });
 
   group('settings', () {

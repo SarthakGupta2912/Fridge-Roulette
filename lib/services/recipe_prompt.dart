@@ -67,7 +67,15 @@ class RecipePromptBuilder {
       ..writeln(
         'You may also use ONLY these basics: salt, pepper, oil, water, sugar.',
       )
-      ..writeln('Do not add any other ingredient.')
+      ..writeln(
+        'Do not add any other ingredient. Never invent pie crust, flour, '
+        'butter, milk, cream, cheese, meat, fish, eggs, bread, rice or pasta '
+        'unless it is in the fridge list.',
+      )
+      ..writeln(
+        'If the fridge list has only fruit, make a cold fruit dish and do not '
+        'use an oven or a stove.',
+      )
       ..writeln(
         'The recipe must be kid-friendly. Never use alcohol. Never tell a '
         'child to eat raw meat, raw fish or raw eggs. Meat, fish and eggs must '
@@ -77,13 +85,14 @@ class RecipePromptBuilder {
         'If a step needs a knife, a hot pan, an oven or a stove, tell the '
         'child to ask a grown-up first.',
       )
-      ..writeln('Use 4 to 6 short steps. One sentence per step.')
+      ..writeln('Use exactly 4 short steps. One sentence per step.')
       ..writeln(
         'Use medium-high heat only when a grown-up is helping. Keep it safe '
         'and easy.',
       )
       ..writeln('Chef style: $chefStyle.')
-      ..writeln('Fun twist: $twist');
+      ..writeln('Fun twist: $twist')
+      ..writeln('Do not repeat the same word twice in the title.');
 
     if (avoid.isNotEmpty) {
       prompt.writeln(
@@ -143,6 +152,15 @@ Recipe? parseRecipeText(
   List<String> foods = const <String>[],
 }) {
   final String text = raw
+      // Small models sometimes write the two characters \n instead of a
+      // real line break.
+      .replaceAll(r'\r\n', '\n')
+      .replaceAll(r'\n', '\n')
+      .replaceAll(r'\t', ' ')
+      .replaceFirst(
+        RegExp(r'^\s*(assistant|user|system)\s*:?\s*', caseSensitive: false),
+        '',
+      )
       .replaceAll('\r\n', '\n')
       .replaceAll('\r', '\n')
       .replaceAll(RegExp(r'<[^>]+>'), '')
@@ -250,7 +268,7 @@ Recipe? parseRecipeText(
   final String chosenLevel = _levelFrom(level);
 
   return Recipe(
-    title: (title ?? 'Chef\'s Surprise').trim(),
+    title: _cleanTitle((title ?? 'Chef\'s Surprise').trim()),
     emoji: chosenEmoji,
     minutes: minutes != null && minutes > 0 && minutes <= 120 ? minutes : 15,
     level: chosenLevel,
@@ -262,6 +280,96 @@ Recipe? parseRecipeText(
     rawText: text,
     isAi: isAi,
   );
+}
+
+/// Checks the AI text for common foods that were not detected in the fridge.
+///
+/// A small model can ignore the ingredient list and add pie crust, cream or
+/// meat. In that case the screen should use the safe Quick chef recipe instead.
+bool recipeUsesOnlyAllowedFoods(Recipe recipe, List<String> foods) {
+  final String text = recipe.rawText.isNotEmpty
+      ? recipe.rawText.toLowerCase()
+      : <String>[
+          recipe.title,
+          ...recipe.steps,
+          recipe.tip,
+        ].join(' ').toLowerCase();
+  final List<String> allowed = foods
+      .map((String food) => food.trim().toLowerCase())
+      .where((String food) => food.isNotEmpty)
+      .toList();
+
+  for (final String extra in _extraFoods) {
+    final RegExp pattern = RegExp(
+      r'\b' + RegExp.escape(extra) + r'\b',
+      caseSensitive: false,
+    );
+    if (!pattern.hasMatch(text)) {
+      continue;
+    }
+    final bool isAllowed = allowed.any(
+      (String food) => food.contains(extra) || extra.contains(food),
+    );
+    if (!isAllowed) {
+      return false;
+    }
+  }
+  return true;
+}
+
+const List<String> _extraFoods = <String>[
+  'pie crust',
+  'crust',
+  'flour',
+  'butter',
+  'milk',
+  'cream',
+  'cheese',
+  'egg',
+  'eggs',
+  'chicken',
+  'fish',
+  'meat',
+  'beef',
+  'pork',
+  'bacon',
+  'bread',
+  'rice',
+  'pasta',
+  'noodles',
+  'oats',
+  'chocolate',
+  'honey',
+  'vanilla',
+  'baking powder',
+  'baking soda',
+  'yeast',
+  'cake',
+  'cookie',
+  'ketchup',
+  'mustard',
+  'mayonnaise',
+  'soy sauce',
+  'stock',
+  'broth',
+];
+
+String _cleanTitle(String value) {
+  final String cleaned = value
+      .replaceAll(r'\n', ' ')
+      .replaceFirst(RegExp(r'^(?:title)\s*[:\-]\s*', caseSensitive: false), '')
+      .trim();
+  final List<String> words = cleaned.split(RegExp(r'\s+'));
+  final List<String> kept = <String>[];
+  for (final String word in words) {
+    if (word.isEmpty) {
+      continue;
+    }
+    if (kept.isEmpty || kept.last.toLowerCase() != word.toLowerCase()) {
+      kept.add(word);
+    }
+  }
+  return kept.isEmpty ? 'Chef\'s Surprise' : kept.join(' ');
 }
 
 bool _isAnyLabel(String upper) {

@@ -170,9 +170,8 @@ class DetectingOverlay extends StatelessWidget {
                                     ? AppStrings.getReady
                                     : AppStrings.lookingForFood,
                                 textAlign: TextAlign.center,
-                                style: Theme.of(
-                                  context,
-                                ).textTheme.titleLarge?.copyWith(color: onScrim),
+                                style: Theme.of(context).textTheme.titleLarge
+                                    ?.copyWith(color: onScrim),
                               ),
                               if (showProgress) ...[
                                 const SizedBox(height: 12),
@@ -208,9 +207,8 @@ class DetectingOverlay extends StatelessWidget {
                                     ? AppStrings.loadingBody
                                     : AppStrings.detectingHint,
                                 textAlign: TextAlign.center,
-                                style: Theme.of(
-                                  context,
-                                ).textTheme.bodyMedium?.copyWith(color: onScrim),
+                                style: Theme.of(context).textTheme.bodyMedium
+                                    ?.copyWith(color: onScrim),
                               ),
                             ],
                           ),

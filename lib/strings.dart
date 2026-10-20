@@ -68,6 +68,10 @@ class AppStrings {
   static const String downloadStorageBody =
       'Please keep about 750 MB free. You can delete the chef brain later.';
   static const String downloadButton = 'Download AI chef';
+  static const String downloadTryAgain = 'Try again';
+  static const String downloadStarting = 'Starting the download...';
+  static const String downloadNotificationHint =
+      'A progress notification will appear. Allow notifications if Android asks.';
   static const String downloadCancel = 'Cancel download';
   static const String downloadReadyTitle = 'Your AI chef is ready!';
   static const String downloadReadyBody =
@@ -75,12 +79,27 @@ class AppStrings {
   static const String downloadDone = 'Start cooking';
   static const String useQuickChef = 'Use Quick chef';
   static const String downloadErrorTitle = 'The download did not finish';
+  static const String downloadNoInternetTitle = 'No internet';
   static const String downloadNoInternetBody =
-      'Please check your internet and try again. The Quick chef still works.';
+      'Please check your Wi-Fi or mobile data and try again. The Quick chef '
+      'still works.';
+  static const String downloadServerTitle = 'The model server is busy';
+  static const String downloadServerBody =
+      'The download server is taking a little break. Wait a minute, then try '
+      'again. The Quick chef still works.';
+  static const String downloadStorageErrorTitle = 'Not enough space';
   static const String downloadStorageErrorBody =
       'There is not enough space. Free some room and try again.';
+  static const String downloadUnavailableTitle = 'The AI chef is not available';
+  static const String downloadUnavailableBody =
+      'The chef brain cannot be downloaded right now. Try again later, or use '
+      'the Quick chef.';
+  static const String downloadStartupTitle = 'The AI chef did not wake up';
+  static const String downloadStartupBody =
+      'Close the app, open it again, and tap Try again. The Quick chef still '
+      'works.';
   static const String downloadCorruptBody =
-      'The file got damaged. Tap Try Again for a fresh copy.';
+      'The file got damaged. Tap Try again for a fresh copy.';
   static const String downloadGenericBody =
       'Something stopped the download. You can try again.';
   static const String downloadCancelled =
@@ -113,6 +132,8 @@ class AppStrings {
       'The AI chef got a little tired, so Quick chef made this one.';
   static const String aiNoModel =
       'The AI chef is not downloaded, so Quick chef made this one.';
+  static const String aiExtraFood =
+      'The AI chef used a food you do not have, so Quick chef made this one.';
   static const String timeoutTitle = 'The chef is thinking too hard';
   static const String timeoutBody =
       'That took too long. Try one more time, or ask the Quick chef.';

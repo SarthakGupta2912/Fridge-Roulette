@@ -103,6 +103,64 @@ void main() {
       expect(parseRecipeText(''), isNull);
     });
 
+    test('reads literal slash-n line breaks and a Title prefix', () {
+      const String text =
+          r'\nTitle: The Simple Banana Apple Slice\nEMOJI: 🍌\nTIME: 2\n'
+          r'LEVEL: Easy\nSTEPS:\n1. Peel the banana.\n2. Slice the apple.\n'
+          r'3. Mix them.\n4. Serve cold.\nTIP: Yum!';
+      final Recipe? recipe = parseRecipeText(
+        text,
+        foods: <String>['Banana', 'Apple'],
+      );
+
+      expect(recipe, isNotNull);
+      expect(recipe!.title, 'The Simple Banana Apple Slice');
+      expect(recipe.steps, hasLength(4));
+    });
+
+    test('cleans a repeated word in the title and flags invented food', () {
+      const String text = '''
+TITLE: Rainbow Rainbow Apple Pie
+EMOJI: 🥧
+TIME: 20
+LEVEL: Easy
+STEPS:
+1. Put the pie crust in a dish.
+2. Add the apple.
+3. Top with whipped cream.
+4. Ask a grown-up to bake it.
+TIP: Yum!
+''';
+      final Recipe? recipe = parseRecipeText(
+        text,
+        foods: <String>['Banana', 'Apple'],
+      );
+
+      expect(recipe, isNotNull);
+      expect(recipe!.title, 'Rainbow Apple Pie');
+      expect(
+        recipeUsesOnlyAllowedFoods(recipe, <String>['Banana', 'Apple']),
+        isFalse,
+      );
+    });
+
+    test('allows an extra food when it was detected in the fridge', () {
+      final Recipe? recipe = parseRecipeText(
+        goodModelText.replaceFirst('Wash the banana', 'Melt the butter'),
+        foods: <String>['Banana', 'Apple', 'Butter'],
+      );
+
+      expect(recipe, isNotNull);
+      expect(
+        recipeUsesOnlyAllowedFoods(recipe!, <String>[
+          'Banana',
+          'Apple',
+          'Butter',
+        ]),
+        isTrue,
+      );
+    });
+
     test('number steps even when the STEPS label is missing', () {
       const String text = '''
 TITLE: Quick Bowl

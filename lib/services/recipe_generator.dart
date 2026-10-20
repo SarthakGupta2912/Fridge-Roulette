@@ -74,17 +74,31 @@ class RecipeGenerator {
         recentTitles: _recentTitles,
       );
       final InferenceModel model = await _loadModel();
+      // Greedy decoding is much more reliable on the tiny model. Variety still
+      // comes from the random chef style, twist and recent recipe names.
       session = await model.createSession(
-        temperature: 0.85,
-        topK: 40,
-        topP: 0.95,
+        temperature: 0,
+        topK: 1,
         randomSeed: _random.nextInt(1 << 31),
-        systemInstruction:
-            'You are Chef Coco, a kind chef for children. Follow the format '
-            'exactly. Write plain text only.',
       );
       _session = session;
-      await session.addQueryChunk(Message(text: prompt.text, isUser: true));
+      try {
+        final int promptTokens = await session.sizeInTokens(prompt.text);
+        debugPrint('Chef prompt is $promptTokens tokens.');
+      } catch (error) {
+        debugPrint('Could not count the chef prompt: $error');
+      }
+      // The Qwen .task bundle has no prompt template, so add its ChatML
+      // markers ourselves. Without them the model continues raw text and can
+      // start the recipe with a broken token.
+      await session.addQueryChunk(
+        Message(
+          text:
+              '<|im_start|>user\n${prompt.text}<|im_end|>\n'
+              '<|im_start|>assistant\n',
+          isUser: true,
+        ),
+      );
 
       int tokens = 0;
       await for (final String token in session.getResponseAsync().timeout(
@@ -156,17 +170,20 @@ class RecipeGenerator {
       return loaded;
     }
 
+    // MediaPipe's GPU path is not reliable on every tablet: some drivers
+    // report success but return bad tokens. Start on the CPU, which is slower
+    // but writes a correct recipe.
     InferenceModel model;
     try {
       model = await FlutterEdgeAi.getActiveModel(
         maxTokens: 1280,
-        preferredBackend: PreferredBackend.gpu,
+        preferredBackend: PreferredBackend.cpu,
       );
     } catch (error) {
-      debugPrint('GPU chef did not wake up, trying the CPU: $error');
+      debugPrint('CPU chef did not wake up, trying the GPU: $error');
       model = await FlutterEdgeAi.getActiveModel(
         maxTokens: 1280,
-        preferredBackend: PreferredBackend.cpu,
+        preferredBackend: PreferredBackend.gpu,
       );
     }
     _model = model;
