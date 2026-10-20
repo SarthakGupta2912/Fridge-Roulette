@@ -16,16 +16,16 @@ This checklist takes Fridge Roulette from source to the Google Play Console.
 | Minify / shrink | R8 and resource shrinking enabled for release |
 | Permissions in release APK | Only the app's own `DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION` |
 
-The application id and signing key are permanent for this Play listing. Do not change the id after the first upload.
+The application id is permanent after the first upload. Lock in the signing key before the first Play upload; after that, keep the same key for every update.
 
 ## 1. One-time signing setup
 
-A local upload keystore was created for this build:
+This project uses the upload keystore copied from the `invoice_management_system` project:
 
-- `android/app/upload-keystore.jks`
-- `android/key.properties` (contains the random passwords)
+- `android/app/upload-keystore.jks` (alias `upload`, owner `CN=Sarthak, OU=PathKosh`)
+- `android/key.properties` (contains the matching passwords)
 
-Both are gitignored. **Back them up now** in a password manager or encrypted drive. If the upload key is lost, you cannot update the app unless Play App Signing lets you request an upload-key reset.
+Both are gitignored. **Back them up now** in a password manager or encrypted drive. If the upload key is lost, you cannot update the app unless Play App Signing lets you request an upload-key reset. The certificate SHA-256 digest is documented in section 5.
 
 To use your own key instead:
 
@@ -84,8 +84,8 @@ The debug APK is large because it contains every ABI and no shrinking. Use the u
 SHA-256 checksums for this build:
 
 ```text
-app-release.apk  BB89EE4613C1A46497F6422BD17B8A3CF2CE0F88A85CB407D512F369C102DED0
-app-release.aab  A1FF912B889E3CB6C86BB00621873095A582E480B4BCB0CC7C331D89EDA4056C
+app-release.apk  7F99C7455880E306197A9430376D1A00013B3BD19C4FA710FAB7B6B20383CADF
+app-release.aab  1D36052A93E2944AE8C8FAC20ED1074D0B1B2F7492CE28A20389611399C5A2BB
 ```
 
 Verified on 20 Oct 2026 on a Samsung Galaxy Tab S6 Lite (SM-T865, Android 12) over wireless ADB: the release APK installs and launches, the model loads, a banana photo is detected and boxed, add-food, the roulette spin, "Banana Shake" and the recipe screen work, and landscape plus 1.5x text render correctly.
@@ -114,10 +114,10 @@ Those files land in `build\app\outputs\flutter-apk\` with `arm64-v8a`, `armeabi-
 
 (On this machine the SDK is `D:\Android\Sdk`, so use `D:\Android\Sdk\build-tools\36.0.0\apksigner.bat`.)
 
-The DN should be `CN=Fridge Roulette`. The SHA-256 digest for the local upload key is:
+The DN should be `CN=Sarthak, OU=PathKosh, O=Sarthak, L=Panchkula, ST=Haryana, C=IN`. The SHA-256 digest for the local upload key is:
 
 ```text
-7e459aacd83adcd53a2f908c1397ef86dba375c550a2cb68792a758bff512eaf
+2b1ed35bb5137fd0b5dbecb3a43615a6ec61b4570111b16c7ea76d5ff05b79d9
 ```
 
 Keep this digest. Play App Signing will show a different app-signing certificate after upload.
@@ -202,6 +202,8 @@ Do this on at least one real phone before uploading:
 ### Play App Signing
 
 The first upload can register the local upload key. Let Play generate and manage the app-signing key. Keep the upload keystore safe: every future AAB must be signed with it.
+
+**The signing key changed.** Earlier local artifacts were signed with a different key. This AAB is signed with the PathKosh key documented above. If an AAB was not yet uploaded, this is fine: upload this one and register the new key. If a build was already uploaded under the old key, Play will reject this AAB; request an upload-key reset in Play Console, or rebuild with the old key. Do not mix AABs signed by different keys.
 
 ## 7. Store assets still needed
 

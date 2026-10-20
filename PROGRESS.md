@@ -75,7 +75,7 @@ This file is my checklist. I update it after every phase.
 | Release APK | `build/app/outputs/flutter-apk/app-release.apk` (74.59 MB) |
 | Release AAB | `build/app/outputs/bundle/release/app-release.aab` (64.52 MB) |
 | Release permissions | No INTERNET, CAMERA, network state, or background permissions |
-| Release signer | Local upload key, CN=Fridge Roulette |
+| Release signer | Upload key shared with invoice_management_system, CN=Sarthak, OU=PathKosh |
 | Device check | Samsung SM-T865, Android 12: launch, detection, spin, recipe, landscape, 1.5x text |
 
 ## Decisions I made along the way
@@ -90,7 +90,7 @@ This file is my checklist. I update it after every phase.
 - **Icons:** The fridge icon is drawn as a vector for the adaptive/monochrome icon and rendered to PNG for Android 7 devices; no icon-generation package was added.
 - **Splash:** A native Android splash plus a short in-app splash while the model loads; no extra package.
 - **Build fix:** Kotlin incremental compilation is disabled because the pub cache is on `C:` and the project is on `D:`, which caused cache-root build failures.
-- **Signing:** A local upload keystore and `android/key.properties` were generated and gitignored. They must be backed up; they are not in the repository.
+- **Signing:** The upload keystore was replaced with the one from `invoice_management_system` (alias `upload`). `android/key.properties` and the JKS are gitignored and must be backed up; they are not in the repository.
 
 ## Still to do outside the codebase
 
