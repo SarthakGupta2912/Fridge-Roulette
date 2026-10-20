@@ -7,7 +7,7 @@ This checklist takes Fridge Roulette from source to the Google Play Console.
 | Item | Value |
 | --- | --- |
 | Application id | `com.sarthakgupta.fridgeroulette` |
-| Version | `1.0.0` (versionCode `1`, from `pubspec.yaml`) |
+| Version | `1.0.1` (versionCode `2`, from `pubspec.yaml`) |
 | Minimum Android | 7.0 / API 24 |
 | Target Android | API 36 |
 | Compile SDK | 36 |
@@ -63,7 +63,7 @@ flutter analyze
 flutter test
 ```
 
-Expected: no formatting changes, no analyzer issues, 53 passing tests.
+Expected: no formatting changes, no analyzer issues, 59 passing tests.
 
 ## 4. Build the artifacts
 
@@ -84,16 +84,16 @@ Outputs:
 
 | Artifact | Path | Size (current build) |
 | --- | --- | --- |
-| Release APK (universal) | `build\app\outputs\flutter-apk\app-release.apk` | 98,763,985 bytes (94.2 MiB) |
-| Release AAB | `build\app\outputs\bundle\release\app-release.aab` | 160,630,801 bytes (153.2 MiB) |
+| Release APK (universal) | `build\app\outputs\flutter-apk\app-release.apk` | 98,766,485 bytes (94.2 MiB) |
+| Release AAB | `build\app\outputs\bundle\release\app-release.aab` | 160,635,615 bytes (153.2 MiB) |
 
 The AI recipe model is **not** in either file. The size comes from the MediaPipe/Flutter AI native libraries for `arm64-v8a`, `armeabi-v7a`, and `x86_64`, the two bundled food models, and ML Kit's bundled Latin OCR model. The AAB lets Play deliver only the needed pieces. The universal APK contains all three ABIs and stays below 100 MB, but only just.
 
 SHA-256 checksums for this build:
 
 ```text
-app-release.apk  BF7DBF7F8AD1CD361884B5D09D00821C865CB0982C89C1D391FFCB02380D98CC
-app-release.aab  8F1DAC3E595A838FFF0C407D170AC0452AC2E8DA028DBBE3598DCEC7545EEFDE
+app-release.apk  AB4E1673482F5CCB94EA3E3EE95A7B59B51493CBC7D92A0CB7EEBA80F7DA2C26
+app-release.aab  157D605FB0A3BAD74DFD38EA6AAD78D63976F130C563CA642F0E534F111C2B56
 ```
 
 If you rebuild, the checksums change. Recompute with:
@@ -137,7 +137,7 @@ android.permission.ACCESS_NETWORK_STATE
 com.sarthakgupta.fridgeroulette.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION
 ```
 
-There must be **no** `CAMERA`, location, storage, microphone, or `RECEIVE_BOOT_COMPLETED` permission. `INTERNET` is used only for the one-time AI model download. `ACCESS_NETWORK_STATE` and `WAKE_LOCK` support that download. `FOREGROUND_SERVICE` and `FOREGROUND_SERVICE_DATA_SYNC` keep the download alive while the child leaves the app, and `POST_NOTIFICATIONS` shows the progress notification on Android 13+. The notification is local, contains no personal data, and is optional; denying it does not stop the download.
+There must be **no** `CAMERA`, location, storage, microphone, or `RECEIVE_BOOT_COMPLETED` permission. `INTERNET` is used only for the one-time AI model download. `ACCESS_NETWORK_STATE` and `WAKE_LOCK` support that download. `FOREGROUND_SERVICE` and `FOREGROUND_SERVICE_DATA_SYNC` keep the download alive while the child leaves the app, and `POST_NOTIFICATIONS` shows the progress notification on Android 13+. The app shows its own explanation before Android's permission pop-up, and only starts the transfer after the child chooses Allow or Not now. The notification is local, contains no personal data, and is optional; denying it does not stop the download, but the download screen then tells the child to keep the app open.
 
 The manifest uses `tools:node="remove"` for camera and boot permissions that libraries add. The debug and profile manifests still add `INTERNET` so Flutter's hot-reload connection works; that is normal and does not affect the release build.
 
@@ -154,7 +154,7 @@ LiteRT and MediaPipe run model methods through JNI and reflection. WorkManager o
 Check:
 
 - package name `com.sarthakgupta.fridgeroulette`
-- version name `1.0.0`, version code `1`
+- version name `1.0.1`, version code `2`
 - `sdkVersion:'24'`, `targetSdkVersion:'36'`
 - label `Fridge Roulette`
 - `uses-feature-not-required` for camera and autofocus
@@ -181,10 +181,11 @@ Do this on at least one real phone before uploading:
 - [ ] Cancel the download; the Quick chef recipe still appears and the app stays usable.
 - [ ] Download the 521 MiB model on Wi-Fi; percent and MB update; the screen survives rotation and a pause.
 - [ ] A foreground notification shows the model name and a moving progress bar; it disappears when the download finishes.
-- [ ] Deny the notification permission on Android 13+; the download still finishes and the progress screen keeps updating.
+- [ ] On Android 13+, tap Download and confirm the app first explains the notification permission in its own dialog, then Android's pop-up appears. Tapping Allow should start the download without a long "starting" wait.
+- [ ] On Android 13+, choose Not now (or deny the system permission); the download still starts, shows the keep-this-screen-open hint, and finishes while the screen stays open.
 - [ ] Block the network before tapping Download; the No internet card appears quickly instead of an endless "starting" spinner; restore the network and confirm Try again resumes.
 - [ ] Interrupt the download (airplane mode) after it starts; the downloader waits or reports a friendly error, and Try Again works. A server error is covered by the unit tests.
-- [ ] Let the AI chef write a recipe; text appears word by word; the AI chef badge is visible.
+- [ ] Let the AI chef write a recipe; text appears word by word; the AI chef badge is visible; the live text contains real line breaks and no literal `\n`, `<br>`, or other HTML tags.
 - [ ] Tap **Stop**; the partial raw text or a friendly stopped card appears.
 - [ ] Test a second AI recipe with the same foods; the title and idea should differ.
 - [ ] Tap **Make another one** and **Change foods**.
@@ -253,6 +254,6 @@ Suggested shot list: Home, detection result with boxes, food chips, spinning whe
 
 - Flutter prints a warning that `ultralytics_yolo` still applies the Kotlin Gradle Plugin. The build succeeds today; upgrade the plugin when it supports Flutter's built-in Kotlin.
 - Kotlin incremental compilation is disabled in `android/gradle.properties` because the pub cache and project are on different drives, which otherwise breaks the build with a "different roots" cache error.
-- The universal APK is 98,763,985 bytes, just under the 100 MB limit. Any new native library or model will push it over. Use the AAB for Play and split APKs for small test installs.
+- The universal APK is 98,766,485 bytes, just under the 100 MB limit. Any new native library or model will push it over. Use the AAB for Play and split APKs for small test installs.
 - ML Kit OCR is bundled for Latin script only. The other script options are referenced by the plugin but intentionally not shipped; the ProGuard rules suppress their missing-class warnings.
-- The dual-model scan, label reader, 521 MiB download, foreground notification, no-internet card, retry, and live MediaPipe generation were verified on a Samsung SM-T865 tablet. Still needed before publishing: a low-end phone, TalkBack, the system-camera path, and a real low-storage test. The AI recipe generator was switched to CPU-first because the GPU path returned broken tokens on the test tablet.
+- The dual-model scan, label reader, 521 MiB download, foreground notification, in-app notification explanation, no-internet card, retry, live MediaPipe generation, and plain-text streaming cleanup were verified on a Samsung SM-T865 tablet. The tablet runs Android 12, so the Android 13+ system permission pop-up itself still needs a real-phone check. Still needed before publishing: a low-end phone, TalkBack, the system-camera path, and a real low-storage test. The AI recipe generator was switched to CPU-first because the GPU path returned broken tokens on the test tablet.

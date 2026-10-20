@@ -135,6 +135,17 @@ The app is designed for children around 6-12 and their families.
 
 ## Release notes
 
+### 1.0.1 (versionCode 2)
+
+```text
+Small polish update.
+* Download progress starts faster and explains the notification choice first
+* Choose Allow for a progress notification, or Not now to keep the screen open
+* Clearer download errors and retry
+* Recipe text now shows plain English while it is being written
+* No more visible \n codes or HTML tags in the live recipe
+```
+
 ### 1.0.0 (versionCode 1)
 
 ```text

@@ -63,16 +63,19 @@ This file is my checklist. I update it after every phase.
 
 ## Phase 8 - Test, build and docs
 - [x] flutter analyze clean
-- [x] flutter test passing (53 tests)
-- [x] Release APK built (98,763,985 bytes, under 100 MB)
-- [x] Release AAB built (160,630,801 bytes)
+- [x] flutter test passing (59 tests)
+- [x] Release APK built (98,766,485 bytes, under 100 MB)
+- [x] Release AAB built (160,635,615 bytes)
 - [x] Split APKs built for smaller test installs
 - [x] Merged manifest checked
 - [x] README, RELEASE, STORE_LISTING, PRIVACY_POLICY, and PROGRESS docs updated
 - [x] Release APK installed and smoke tested on a real device for the original flow
 - [x] Dual-model scan + ML Kit label reader smoke tested on the SM-T865 tablet
 - [x] Full 521 MB AI download, progress notification, no-internet card, retry, and live MediaPipe generation tested on the SM-T865 tablet
-- [ ] Low-end phone, TalkBack, and system-camera path tested
+- [x] In-app notification explanation, Allow/Not now path, and keep-screen-open hint implemented
+- [x] Live recipe text cleans literal `\n`, HTML tags, and half-finished model tokens
+- [x] Updated APK installed on the SM-T865 and download progress/notification rechecked
+- [ ] Low-end phone, TalkBack, Android 13+ permission pop-up, and system-camera path tested
 - [ ] All work committed and pushed
 
 ## Current status
@@ -81,15 +84,15 @@ This file is my checklist. I update it after every phase.
 | --- | --- |
 | Flutter / Dart | 3.44.6 / 3.12.2 |
 | Analyze | No issues |
-| Tests | 53 passed |
-| Release APK (universal) | `build/app/outputs/flutter-apk/app-release.apk` (98,763,985 bytes / 94.2 MiB) |
-| Release AAB | `build/app/outputs/bundle/release/app-release.aab` (160,630,801 bytes / 153.2 MiB) |
+| Tests | 59 passed |
+| Release APK (universal) | `build/app/outputs/flutter-apk/app-release.apk` (98,766,485 bytes / 94.2 MiB) |
+| Release AAB | `build/app/outputs/bundle/release/app-release.aab` (160,635,615 bytes / 153.2 MiB) |
 | Release permissions | INTERNET (one-time model download), ACCESS_NETWORK_STATE, WAKE_LOCK, FOREGROUND_SERVICE, FOREGROUND_SERVICE_DATA_SYNC, POST_NOTIFICATIONS, private receiver permission |
 | Release signer | Upload key shared with invoice_management_system, CN=Sarthak, OU=PathKosh |
 | Food models | COCO detector 2.9 MB + FoodSeg103 segmenter 14.6 MB, bundled |
 | Package labels | ML Kit Latin OCR, bundled, on-device |
 | AI model | Qwen2.5 0.5B Instruct, 521 MiB, Apache-2.0, downloaded once, not bundled |
-| Device check | Samsung SM-T865: dual-model scan, OCR, 521 MB download, progress notification, no-internet card, retry, and live AI recipe generation verified; low-end phone, TalkBack, and system camera still pending |
+| Device check | Samsung SM-T865: dual-model scan, OCR, 521 MB download, progress notification, no-internet card, retry, live AI recipe generation, and the new download progress flow verified; low-end phone, TalkBack, Android 13+ permission pop-up, and system camera still pending |
 
 ## Decisions I made along the way
 
@@ -102,9 +105,9 @@ This file is my checklist. I update it after every phase.
 - **Model loading:** CPU first, GPU fallback. The test tablet's GPU path started but returned broken tokens, so the CPU is the safe default. The prompt is wrapped in Qwen ChatML markers and decoded greedily; MediaPipe ignores `maxOutputTokens`, so generation is capped manually at 340 tokens. A 60-second timeout and a Stop button protect the child from a stuck screen.
 - **Prompt safety:** Only detected foods plus salt, pepper, oil, water, and sugar. No alcohol. Meat, fish, and eggs must be fully cooked. A grown-up is required for knives, hot pans, ovens, and stoves.
 - **Prompt variety:** Random chef style, random fun twist, and the last three recipe names. The fixed plain-text format is TITLE, EMOJI, TIME, LEVEL, STEPS, TIP.
-- **Parser:** Lenient about stars, lowercase labels, missing emoji, a missing STEPS label, literal `\n` text, and a repeated word in the title. It requires at least one numbered step; otherwise the screen shows the raw model text. If the AI mentions a food that was not detected, the screen uses the Quick chef instead.
+- **Parser:** Lenient about stars, lowercase labels, missing emoji, a missing STEPS label, literal `\n` text, HTML tags, and a repeated word in the title. The live streaming text uses the same cleaner so the child never sees escape codes or half-finished tags while the chef writes. It requires at least one numbered step; otherwise the screen shows the raw model text. If the AI mentions a food that was not detected, the screen uses the Quick chef instead.
 - **Quick chef:** A method + flavour + serving idea + detected foods. It never repeats the same title twice in a row and works without any model.
-- **Download:** A DNS preflight gives an instant no-internet card, the plugin retries only 3 times, and the transfer runs in a foreground service with a progress notification. Notification permission is optional.
+- **Download:** A DNS preflight gives an instant no-internet card, the plugin retries only 3 times, and the transfer runs in a foreground service with a progress notification. On Android 13+ the app explains notification permission before starting, then shows Android's pop-up; Allow uses the foreground notification, Not now downloads without one and shows a keep-screen-open hint. This avoids the downloader making a hidden permission request in the middle of "starting".
 - **Mapping:** COCO `bottle` becomes **Juice or Drink**. Cups, bowls, utensils, people, and appliances are ignored so the food list stays clean.
 - **Safety:** Every recipe asks for a grown-up with knives and heat. The generated recipe is entertainment, not medical or allergy advice.
 - **UI:** Plain `StatefulWidget` + `setState`, one screen per file, every string in `strings.dart`, and shared widgets in `lib/widgets/`.
@@ -113,13 +116,14 @@ This file is my checklist. I update it after every phase.
 - **Splash:** A native Android splash plus a short in-app splash while the detector loads; no extra package.
 - **Build fix:** Kotlin incremental compilation is disabled because the pub cache is on `C:` and the project is on `D:`, which caused cache-root build failures.
 - **Signing:** The upload keystore was replaced with the one from `invoice_management_system` (alias `upload`). `android/key.properties` and the JKS are gitignored and must be backed up; they are not in the repository.
-- **Size:** The universal APK is 98,763,985 bytes (94.2 MiB). Native libraries are stored compressed, and three unused MediaPipe image-generator libraries are excluded. The AAB is 160,630,801 bytes and Play splits it by device. Split APKs are available for smaller test installs. The APK is under 100 MB but has little room for another model.
+- **Size:** The universal APK is 98,766,485 bytes (94.2 MiB). Native libraries are stored compressed, and three unused MediaPipe image-generator libraries are excluded. The AAB is 160,635,615 bytes and Play splits it by device. Split APKs are available for smaller test installs. The APK is under 100 MB but has little room for another model.
 - **R8:** ML Kit's plugin mentions optional Chinese, Devanagari, Japanese, and Korean recognizers that are not bundled. `proguard-rules.pro` suppresses those missing-class warnings and keeps Kotlin coroutine/Result classes, the downloader, and the ML Kit registrars that JNI and manifest metadata load by name. Only Latin OCR ships.
 
 ## Still to do outside the codebase
 
 - [ ] Back up `android/app/upload-keystore.jks` and `android/key.properties`.
 - [ ] Test a low-end phone, TalkBack, the system-camera path, and a real low-storage download.
+- [ ] Test the Android 13+ notification explanation and system permission pop-up on a real phone.
 - [ ] Test the AI Stop button, delete, and low-memory behavior on a phone.
 - [ ] Capture phone and tablet screenshots; create a 1024x500 feature graphic and 512x512 store icon.
 - [ ] Host PRIVACY_POLICY.md and replace the contact email placeholder.
