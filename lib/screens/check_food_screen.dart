@@ -5,8 +5,9 @@ import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 
 import '../data/ingredients.dart';
+import '../services/chef_brain.dart';
 import '../services/detector_service.dart';
-import '../services/recipe_picker.dart';
+import '../services/recipe_generator.dart';
 import '../strings.dart';
 import '../widgets/add_food_sheet.dart';
 import '../widgets/big_action_button.dart';
@@ -16,6 +17,7 @@ import '../widgets/friendly_dialog.dart';
 import '../widgets/layout_helper.dart';
 import '../widgets/photo_with_boxes.dart';
 import '../widgets/step_indicator.dart';
+import 'model_download_screen.dart';
 import 'roulette_screen.dart';
 
 /// Why the food finder could not show a normal food list.
@@ -27,13 +29,15 @@ class CheckFoodScreen extends StatefulWidget {
   const CheckFoodScreen({
     super.key,
     required this.detector,
-    required this.picker,
+    required this.chefBrain,
+    required this.generator,
     this.photoBytes,
     this.autoDetect = true,
   });
 
   final DetectorService detector;
-  final RecipePicker picker;
+  final ChefBrain chefBrain;
+  final RecipeGenerator generator;
 
   /// Null when the child chose to add food by hand, without a photo.
   final Uint8List? photoBytes;
@@ -51,6 +55,7 @@ class _CheckFoodScreenState extends State<CheckFoodScreen> {
 
   bool _detecting = false;
   bool _leaveDialogOpen = false;
+  bool _askedAboutAi = false;
   double _aspectRatio = 3 / 4;
   _ScanProblem _problem = _ScanProblem.none;
 
@@ -191,11 +196,34 @@ class _CheckFoodScreenState extends State<CheckFoodScreen> {
     setState(() => _foodIds.remove(id));
   }
 
-  void _spinTheWheel() {
-    Navigator.of(context).push(
+  Future<void> _spinTheWheel() async {
+    // On the first recipe request we offer the one-time chef brain download.
+    // If the child skips it, the Quick chef still makes a recipe.
+    if (!_askedAboutAi && !widget.chefBrain.isReady) {
+      _askedAboutAi = true;
+      await Navigator.of(context).push<bool>(
+        MaterialPageRoute<bool>(
+          builder: (BuildContext context) =>
+              ModelDownloadScreen(chefBrain: widget.chefBrain),
+        ),
+      );
+      if (!mounted) {
+        return;
+      }
+      await widget.chefBrain.refresh();
+      if (!mounted) {
+        return;
+      }
+    }
+
+    await Navigator.of(context).push(
       MaterialPageRoute<void>(
-        builder: (BuildContext context) =>
-            RouletteScreen(picker: widget.picker, foodIds: _foodIds.toList()),
+        settings: const RouteSettings(name: 'roulette'),
+        builder: (BuildContext context) => RouletteScreen(
+          chefBrain: widget.chefBrain,
+          generator: widget.generator,
+          foodIds: _foodIds.toList(),
+        ),
       ),
     );
   }

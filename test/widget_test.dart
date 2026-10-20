@@ -1,5 +1,4 @@
 import 'dart:convert';
-import 'dart:math';
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
@@ -11,8 +10,10 @@ import 'package:fridge_roulette/screens/check_food_screen.dart';
 import 'package:fridge_roulette/screens/home_screen.dart';
 import 'package:fridge_roulette/screens/recipe_screen.dart';
 import 'package:fridge_roulette/screens/roulette_screen.dart';
+import 'package:fridge_roulette/screens/settings_screen.dart';
+import 'package:fridge_roulette/services/chef_brain.dart';
 import 'package:fridge_roulette/services/detector_service.dart';
-import 'package:fridge_roulette/services/recipe_picker.dart';
+import 'package:fridge_roulette/services/recipe_generator.dart';
 import 'package:fridge_roulette/strings.dart';
 import 'package:fridge_roulette/theme.dart';
 
@@ -21,22 +22,70 @@ final Uint8List testPhoto = base64Decode(
   'iVBORw0KGgoAAAANSUhEUgAAAAQAAAADCAYAAAC09K7GAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAAASSURBVBhXY/i/peI/MmYgKAAAyfwl+bthmxMAAAAASUVORK5CYII=',
 );
 
-/// A recipe with short steps, so the tests are easy to read.
-const Recipe testRecipe = Recipe(
-  id: 'test_banana_apple',
-  name: 'Banana Apple Smile',
+const Recipe quickRecipe = Recipe(
+  title: 'Quick Banana Smile',
   emoji: '🍌',
-  requiredFoods: ['banana', 'apple'],
   minutes: 5,
-  difficulty: 1,
-  twist: 'Make a funny face on your plate.',
-  steps: [
+  level: 'Easy',
+  steps: <String>[
     'Wash the fruit.',
     'Ask a grown-up to cut it.',
     'Make a funny face.',
-    'Eat your snack!',
   ],
+  tip: 'Eat it with a smile.',
+  foods: <String>['Banana', 'Apple'],
 );
+
+const String goodModelText = '''
+TITLE: Banana Apple Sunshine
+EMOJI: 🍌
+TIME: 12 minutes
+LEVEL: Medium
+STEPS:
+1. Wash the banana and the apple.
+2. Ask a grown-up to cut them into small pieces.
+3. Put them in a bowl and mix them together.
+4. Make a smiley face on top.
+TIP: Eat it with a funny story.
+''';
+
+/// A recipe writer that never touches the real on-device model.
+class FakeRecipeGenerator extends RecipeGenerator {
+  FakeRecipeGenerator({
+    this.aiReady = false,
+    this.modelText = goodModelText,
+    this.quick = quickRecipe,
+  });
+
+  final bool aiReady;
+  final String modelText;
+  final Recipe quick;
+
+  @override
+  Future<bool> isAiReady() async => aiReady;
+
+  @override
+  Stream<String> makeRecipe(List<String> foods) async* {
+    final List<String> parts = modelText.split(' ');
+    for (int index = 0; index < parts.length; index++) {
+      yield index == 0 ? parts[index] : ' ${parts[index]}';
+      await Future<void>.delayed(Duration.zero);
+    }
+  }
+
+  @override
+  Recipe makeQuickRecipe(List<String> foods) => quick;
+
+  @override
+  Future<void> stop() async {}
+
+  @override
+  Future<void> release() async {}
+}
+
+ChefBrain readyBrain() {
+  return ChefBrain(initialStatus: ChefBrainStatus.ready);
+}
 
 /// A food finder that answers right away without loading a real model.
 class FakeDetector extends DetectorService {
@@ -59,7 +108,7 @@ class FakeDetector extends DetectorService {
 }
 
 FakeDetector foundBananaAndApple() {
-  return FakeDetector([
+  return FakeDetector(<FoodDetection>[
     FoodDetection(
       food: findIngredient('banana')!,
       confidence: 0.9,
@@ -128,6 +177,14 @@ Future<void> tapVisible(WidgetTester tester, Finder finder) async {
   await tester.tap(finder);
 }
 
+/// Lets the fake stream finish and the one-shot chef animation settle.
+Future<void> finishRecipe(WidgetTester tester) async {
+  for (int i = 0; i < 12; i++) {
+    await tester.pump(const Duration(milliseconds: 80));
+  }
+  await tester.pumpAndSettle();
+}
+
 /// A tiny first page so we can test the back button on a pushed screen.
 class TestHost extends StatelessWidget {
   const TestHost({super.key, required this.child});
@@ -173,7 +230,8 @@ void main() {
             tester,
             HomeScreen(
               detector: FakeDetector(<FoodDetection>[]),
-              picker: RecipePicker(recipes: <Recipe>[testRecipe]),
+              chefBrain: readyBrain(),
+              generator: FakeRecipeGenerator(),
             ),
             size: size,
             textScale: 1.5,
@@ -182,6 +240,7 @@ void main() {
 
           expect(find.text(AppStrings.appName), findsOneWidget);
           expect(find.text(AppStrings.takePhoto), findsOneWidget);
+          expect(find.byTooltip(AppStrings.settings), findsOneWidget);
           expectNoLayoutError(tester);
         },
       );
@@ -196,7 +255,8 @@ void main() {
         tester,
         CheckFoodScreen(
           detector: foundBananaAndApple(),
-          picker: RecipePicker(recipes: <Recipe>[testRecipe]),
+          chefBrain: readyBrain(),
+          generator: FakeRecipeGenerator(),
           photoBytes: testPhoto,
         ),
         textScale: 1.5,
@@ -222,7 +282,8 @@ void main() {
         tester,
         CheckFoodScreen(
           detector: foundBananaAndApple(),
-          picker: RecipePicker(recipes: <Recipe>[testRecipe]),
+          chefBrain: readyBrain(),
+          generator: FakeRecipeGenerator(),
           photoBytes: testPhoto,
         ),
       );
@@ -246,7 +307,8 @@ void main() {
         tester,
         CheckFoodScreen(
           detector: FakeDetector(<FoodDetection>[]),
-          picker: RecipePicker(recipes: <Recipe>[testRecipe]),
+          chefBrain: readyBrain(),
+          generator: FakeRecipeGenerator(),
           autoDetect: false,
         ),
         textScale: 1.5,
@@ -270,7 +332,8 @@ void main() {
         TestHost(
           child: CheckFoodScreen(
             detector: foundBananaAndApple(),
-            picker: RecipePicker(recipes: <Recipe>[testRecipe]),
+            chefBrain: readyBrain(),
+            generator: FakeRecipeGenerator(),
             photoBytes: testPhoto,
           ),
         ),
@@ -301,7 +364,8 @@ void main() {
         tester,
         CheckFoodScreen(
           detector: BrokenDetector(),
-          picker: RecipePicker(recipes: <Recipe>[testRecipe]),
+          chefBrain: readyBrain(),
+          generator: FakeRecipeGenerator(),
           photoBytes: testPhoto,
         ),
         textScale: 1.5,
@@ -320,7 +384,8 @@ void main() {
         tester,
         CheckFoodScreen(
           detector: FakeDetector(<FoodDetection>[]),
-          picker: RecipePicker(recipes: <Recipe>[testRecipe]),
+          chefBrain: readyBrain(),
+          generator: FakeRecipeGenerator(),
           photoBytes: testPhoto,
         ),
         textScale: 1.5,
@@ -337,7 +402,8 @@ void main() {
         tester,
         CheckFoodScreen(
           detector: foundBananaAndApple(),
-          picker: RecipePicker(recipes: <Recipe>[testRecipe]),
+          chefBrain: readyBrain(),
+          generator: FakeRecipeGenerator(),
           photoBytes: testPhoto,
         ),
       );
@@ -352,62 +418,106 @@ void main() {
   });
 
   group('roulette and recipe', () {
-    testWidgets('spin reveals a recipe and opens the challenge', (
+    testWidgets('spin opens the live recipe and Quick chef finishes it', (
       WidgetTester tester,
     ) async {
       await pumpScreen(
         tester,
         RouletteScreen(
-          picker: RecipePicker(
-            recipes: <Recipe>[testRecipe],
-            random: Random(7),
-          ),
+          chefBrain: readyBrain(),
+          generator: FakeRecipeGenerator(),
           foodIds: <String>['banana', 'apple'],
         ),
         textScale: 1.5,
       );
+      await tester.pumpAndSettle();
 
       expect(find.text(AppStrings.spinTheWheel), findsOneWidget);
       await tapVisible(tester, find.text(AppStrings.spinTheWheel));
       await tester.pump();
       expect(find.text(AppStrings.spinning), findsWidgets);
 
-      await tester.pump(const Duration(milliseconds: 1700));
-      await tester.pumpAndSettle();
-
-      expect(find.text(testRecipe.name), findsOneWidget);
-      expect(find.text(AppStrings.letsCook), findsOneWidget);
-      expectNoLayoutError(tester);
-
-      await tapVisible(tester, find.text(AppStrings.letsCook));
-      await tester.pumpAndSettle();
+      await tester.pump(const Duration(milliseconds: 1600));
+      await finishRecipe(tester);
 
       expect(find.text(AppStrings.recipeTitle), findsOneWidget);
-      expect(find.text(testRecipe.steps.first), findsOneWidget);
+      expect(find.text(quickRecipe.title), findsOneWidget);
+      expect(find.text(AppStrings.quickChef), findsOneWidget);
+      expect(find.text(quickRecipe.steps.first), findsOneWidget);
       expect(find.text(AppStrings.safetyNote), findsOneWidget);
+      expect(find.text(AppStrings.makeAnother), findsOneWidget);
       expectNoLayoutError(tester);
     });
 
-    testWidgets('foods that need cooking show the no-recipe message', (
+    testWidgets('AI recipe streams in and gets the AI chef badge', (
       WidgetTester tester,
     ) async {
       await pumpScreen(
         tester,
-        RouletteScreen(
-          picker: RecipePicker(recipes: <Recipe>[]),
-          foodIds: <String>['onion', 'potato'],
+        RecipeScreen(
+          chefBrain: readyBrain(),
+          generator: FakeRecipeGenerator(aiReady: true),
+          foodIds: <String>['banana', 'apple'],
         ),
         textScale: 1.5,
       );
+      await finishRecipe(tester);
 
-      await tapVisible(tester, find.text(AppStrings.spinTheWheel));
-      await tester.pump(const Duration(milliseconds: 1700));
-      await tester.pumpAndSettle();
-
-      expect(find.text(AppStrings.rouletteNoRecipe), findsOneWidget);
-      expect(find.text(AppStrings.addMoreFood), findsOneWidget);
+      expect(find.text(AppStrings.aiChef), findsOneWidget);
+      expect(find.text('Banana Apple Sunshine'), findsOneWidget);
+      expect(find.text('Wash the banana and the apple.'), findsOneWidget);
+      expect(find.text('Eat it with a funny story.'), findsOneWidget);
+      expect(find.text(AppStrings.safetyNote), findsOneWidget);
       expectNoLayoutError(tester);
     });
+
+    testWidgets('broken AI text is shown as friendly raw notes', (
+      WidgetTester tester,
+    ) async {
+      await pumpScreen(
+        tester,
+        RecipeScreen(
+          chefBrain: readyBrain(),
+          generator: FakeRecipeGenerator(
+            aiReady: true,
+            modelText: 'The chef wrote a little poem about bananas.',
+          ),
+          foodIds: <String>['banana', 'apple'],
+        ),
+        textScale: 1.5,
+      );
+      await finishRecipe(tester);
+
+      expect(find.text(AppStrings.rawRecipeBody), findsOneWidget);
+      expect(
+        find.text('The chef wrote a little poem about bananas.'),
+        findsOneWidget,
+      );
+      expect(find.text(AppStrings.tryAiAgain), findsOneWidget);
+      expectNoLayoutError(tester);
+    });
+
+    testWidgets(
+      'missing model falls back to Quick chef with a download action',
+      (WidgetTester tester) async {
+        await pumpScreen(
+          tester,
+          RecipeScreen(
+            chefBrain: readyBrain(),
+            generator: FakeRecipeGenerator(aiReady: false),
+            foodIds: <String>['banana', 'apple'],
+          ),
+          textScale: 1.5,
+        );
+        await finishRecipe(tester);
+
+        expect(find.text(AppStrings.quickChef), findsOneWidget);
+        expect(find.text(AppStrings.aiNoModel), findsOneWidget);
+        expect(find.text(AppStrings.tryAiAgain), findsOneWidget);
+        expect(find.text(quickRecipe.title), findsOneWidget);
+        expectNoLayoutError(tester);
+      },
+    );
 
     for (final Size size in sizes) {
       testWidgets(
@@ -415,22 +525,48 @@ void main() {
         (WidgetTester tester) async {
           await pumpScreen(
             tester,
-            const RecipeScreen(
-              recipe: testRecipe,
-              availableFoodIds: <String>['banana', 'apple'],
+            RecipeScreen(
+              chefBrain: readyBrain(),
+              generator: FakeRecipeGenerator(aiReady: true),
+              foodIds: <String>['banana', 'apple'],
             ),
             size: size,
             textScale: 1.5,
           );
+          await finishRecipe(tester);
 
-          expect(find.text(testRecipe.name), findsOneWidget);
-          expect(find.text(AppStrings.challengeTwist), findsOneWidget);
+          expect(find.text('Banana Apple Sunshine'), findsOneWidget);
           expect(find.text(AppStrings.ingredientsLabel), findsOneWidget);
           expect(find.text(AppStrings.stepsLabel), findsOneWidget);
-          expect(find.text(AppStrings.spinAgain), findsOneWidget);
+          expect(find.text(AppStrings.chefTip), findsOneWidget);
+          expect(find.text(AppStrings.makeAnother), findsOneWidget);
           expectNoLayoutError(tester);
         },
       );
     }
+  });
+
+  group('settings', () {
+    testWidgets('shows the chef brain status and license', (
+      WidgetTester tester,
+    ) async {
+      await pumpScreen(
+        tester,
+        SettingsScreen(
+          chefBrain: readyBrain(),
+          generator: FakeRecipeGenerator(),
+        ),
+        size: const Size(360, 640),
+        textScale: 1.5,
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text(AppStrings.chefBrainTitle), findsOneWidget);
+      expect(find.text(AppStrings.chefBrainReady), findsOneWidget);
+      expect(find.text(AppStrings.deleteModel), findsOneWidget);
+      expect(find.text(AppStrings.aboutTitle), findsOneWidget);
+      expect(find.text(AppStrings.privacyPromise), findsOneWidget);
+      expectNoLayoutError(tester);
+    });
   });
 }

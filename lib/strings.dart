@@ -21,9 +21,109 @@ class AppStrings {
   static const String stepSpinEmoji = '🎡';
   static const String homeHint =
       'Tip: Open the fridge door and take one clear photo.';
-  static const String offlineBadge = 'Works offline. No internet needed.';
+  static const String offlineBadge =
+      'Works offline after the one-time AI chef download.';
   static const String noCameraHint =
       'No camera? Use the gallery or add food by hand.';
+
+  static const String settings = 'Settings';
+  static const String settingsTitle = 'Settings';
+  static const String chefBrainTitle = 'Chef brain';
+  static const String chefBrainChecking = 'Checking the chef brain...';
+  static const String chefBrainReady = 'AI chef is ready';
+  static const String chefBrainMissing = 'AI chef is not downloaded';
+  static const String chefBrainFailed = 'The chef brain needs a check';
+  static const String chefBrainReadyBody =
+      'New recipes are written on this phone, even without internet.';
+  static const String chefBrainMissingBody =
+      'Download the chef brain once to get a new AI recipe every time. The '
+      'Quick chef still works without it.';
+  static const String downloadAiChef = 'Download AI chef';
+  static const String modelSize = 'Size';
+  static const String modelLicense = 'License';
+  static const String modelName = 'Model';
+  static const String deleteModel = 'Delete chef brain';
+  static const String deleteModelTitle = 'Delete the chef brain?';
+  static const String deleteModelBody =
+      'This frees about 521 MB. You can download it again later.';
+  static const String delete = 'Delete';
+  static const String modelDeleted = 'The chef brain was deleted.';
+  static const String aboutTitle = 'About';
+  static const String aboutBody =
+      'Fridge Roulette is a kid-friendly cooking game. No account, no ads, '
+      'no analytics. The internet is used only once to download the AI chef.';
+  static const String appVersion = 'Version 1.0.0';
+  static const String privacyPromise =
+      'No personal data is collected. Your photos and food list stay on this '
+      'phone.';
+
+  static const String downloadTitle = 'Give your chef a brain';
+  static const String downloadHeroTitle = 'A little chef can live in this app';
+  static const String downloadHeroBody =
+      'The AI chef writes a brand-new recipe from your food. Download it once, '
+      'then it works offline.';
+  static const String downloadWifiHint =
+      'Tip: Wi-Fi makes this faster. Keep this screen open until it finishes.';
+  static const String downloadStorageTitle = 'Make a little room';
+  static const String downloadStorageBody =
+      'Please keep about 750 MB free. You can delete the chef brain later.';
+  static const String downloadButton = 'Download AI chef';
+  static const String downloadCancel = 'Cancel download';
+  static const String downloadReadyTitle = 'Your AI chef is ready!';
+  static const String downloadReadyBody =
+      'The chef can now write recipes without internet.';
+  static const String downloadDone = 'Start cooking';
+  static const String useQuickChef = 'Use Quick chef';
+  static const String downloadErrorTitle = 'The download did not finish';
+  static const String downloadNoInternetBody =
+      'Please check your internet and try again. The Quick chef still works.';
+  static const String downloadStorageErrorBody =
+      'There is not enough space. Free some room and try again.';
+  static const String downloadCorruptBody =
+      'The file got damaged. Tap Try Again for a fresh copy.';
+  static const String downloadGenericBody =
+      'Something stopped the download. You can try again.';
+  static const String downloadCancelled =
+      'Download cancelled. You can try again anytime.';
+  static const String leaveDownloadTitle = 'Stop the download?';
+  static const String leaveDownloadBody =
+      'The chef brain will not finish downloading. You can try again later.';
+  static const String keepDownloading = 'Keep downloading';
+  static const String cancelAndLeave = 'Cancel and leave';
+  static const String downloadedLabel = 'Downloaded';
+  static const String notDownloadedLabel = 'Not downloaded';
+  static const String chefBrainDownloading = 'Downloading the chef brain...';
+
+  static const String quickChef = 'Quick chef';
+  static const String aiChef = 'AI chef';
+  static const String writingRecipeTitle = 'Your chef is writing...';
+  static const String writingRecipeBody =
+      'A fresh recipe is coming out of the chef brain.';
+  static const String quickChefWriting = 'Quick chef is mixing an idea...';
+  static const String recipeReadyBadge = 'Recipe ready';
+  static const String makeAnother = 'Make another one';
+  static const String changeFoods = 'Change foods';
+  static const String stopChef = 'Stop';
+  static const String stoppedTitle = 'The chef stopped';
+  static const String stoppedBody =
+      'You can try again or let the Quick chef finish.';
+  static const String tryAiAgain = 'Try AI again';
+  static const String useQuickChefAction = 'Use Quick chef';
+  static const String aiHiccup =
+      'The AI chef got a little tired, so Quick chef made this one.';
+  static const String aiNoModel =
+      'The AI chef is not downloaded, so Quick chef made this one.';
+  static const String timeoutTitle = 'The chef is thinking too hard';
+  static const String timeoutBody =
+      'That took too long. Try one more time, or ask the Quick chef.';
+  static const String rawRecipeTitle = 'Chef notes';
+  static const String rawRecipeBody =
+      'The chef wrote this in a funny way. Here are the words.';
+  static const String chefBrainDownloadHint =
+      'Want a new recipe every time? Get the AI chef.';
+  static const String getAiChef = 'Get the AI chef';
+  static const String recipeForFoods = 'Made with your foods';
+  static const String loadingChefBrain = 'Waking up the chef...';
 
   static const String checkTitle = 'Check your food';
   static const String checkSubtitle =
@@ -69,6 +169,8 @@ class AppStrings {
   static const String difficultyLabel = 'How hard?';
   static const String ingredientsLabel = 'What you need';
   static const String stepsLabel = 'How to make it';
+  static const String chefTip = 'Chef tip';
+  static const String liveRecipe = 'Chef is writing';
   static const String safetyNote =
       'Ask a grown-up for help with knives and hot things.';
   static const String fromYourFridge = 'From your fridge';
@@ -142,6 +244,14 @@ class AppStrings {
   static String foodCount(int count) {
     return '$count ${count == 1 ? oneFoodReady : foodsReady}';
   }
+
+  static String downloadProgress(int percent, int doneMb, int totalMb) {
+    return 'Downloading $percent% · $doneMb of $totalMb MB';
+  }
+
+  static String oneTimeDownload(String size) => 'One-time download: $size';
+
+  static String finePrint(String label, String value) => '$label: $value';
 
   /// The Done button in the add-food sheet. It shows how many foods are picked.
   static String doneWithCount(int count) => '$done ($count)';

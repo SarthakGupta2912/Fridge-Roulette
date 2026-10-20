@@ -11,12 +11,15 @@ dependencies:
     sdk: flutter
 
   # The official Ultralytics plugin runs the bundled YOLO model on the phone.
-  # The app never downloads a model, so it works fully offline.
   ultralytics_yolo: 0.6.16
 
   # Used only to open the system camera or gallery. It needs no network.
   image_picker: ^1.2.4
 
+  # The on-device recipe writer. The model is downloaded once, then reused
+  # offline. The MediaPipe engine keeps Android 7 (minSdk 24) support.
+  flutter_edge_ai: ^2.4.1
+  flutter_edge_ai_mediapipe: ^1.2.2
 dev_dependencies:
   flutter_test:
     sdk: flutter

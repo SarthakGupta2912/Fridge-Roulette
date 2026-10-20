@@ -5,13 +5,14 @@ import 'package:flutter/material.dart';
 
 import 'screens/home_screen.dart';
 import 'screens/splash_screen.dart';
+import 'services/chef_brain.dart';
 import 'services/detector_service.dart';
-import 'services/recipe_picker.dart';
+import 'services/recipe_generator.dart';
 import 'strings.dart';
 import 'theme.dart';
 
 /// The app starts here. We also set up safe error handling here.
-void main() {
+Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   // Developers see the error in the console. The child sees a friendly card.
@@ -26,12 +27,18 @@ void main() {
     return const FriendlyErrorWidget();
   };
 
-  runApp(const FridgeRouletteApp());
+  // Starting the plugin is quick. If it fails, the Quick chef still works.
+  final ChefBrain chefBrain = ChefBrain();
+  await chefBrain.initialize();
+
+  runApp(FridgeRouletteApp(chefBrain: chefBrain));
 }
 
-/// The root of the app. It loads the model once and reuses it everywhere.
+/// The root of the app. It loads the food finder once and reuses it everywhere.
 class FridgeRouletteApp extends StatefulWidget {
-  const FridgeRouletteApp({super.key});
+  const FridgeRouletteApp({super.key, required this.chefBrain});
+
+  final ChefBrain chefBrain;
 
   @override
   State<FridgeRouletteApp> createState() => _FridgeRouletteAppState();
@@ -39,7 +46,7 @@ class FridgeRouletteApp extends StatefulWidget {
 
 class _FridgeRouletteAppState extends State<FridgeRouletteApp> {
   final DetectorService _detector = DetectorService();
-  final RecipePicker _picker = RecipePicker();
+  final RecipeGenerator _generator = RecipeGenerator();
   Timer? _splashTimer;
   bool _showSplash = true;
 
@@ -59,6 +66,7 @@ class _FridgeRouletteAppState extends State<FridgeRouletteApp> {
   void dispose() {
     _splashTimer?.cancel();
     _detector.dispose();
+    unawaited(_generator.release());
     super.dispose();
   }
 
@@ -77,7 +85,8 @@ class _FridgeRouletteAppState extends State<FridgeRouletteApp> {
             : HomeScreen(
                 key: const ValueKey<String>('home'),
                 detector: _detector,
-                picker: _picker,
+                chefBrain: widget.chefBrain,
+                generator: _generator,
               ),
       ),
     );

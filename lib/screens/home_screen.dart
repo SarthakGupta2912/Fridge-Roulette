@@ -4,21 +4,30 @@ import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 
+import '../services/chef_brain.dart';
 import '../services/detector_service.dart';
-import '../services/recipe_picker.dart';
+import '../services/recipe_generator.dart';
 import '../strings.dart';
 import '../widgets/big_action_button.dart';
 import '../widgets/friendly_dialog.dart';
 import '../widgets/layout_helper.dart';
 import '../widgets/step_indicator.dart';
 import 'check_food_screen.dart';
+import 'model_download_screen.dart';
+import 'settings_screen.dart';
 
 /// Step 1. The child takes one photo or picks one from the gallery.
 class HomeScreen extends StatefulWidget {
-  const HomeScreen({super.key, required this.detector, required this.picker});
+  const HomeScreen({
+    super.key,
+    required this.detector,
+    required this.chefBrain,
+    required this.generator,
+  });
 
   final DetectorService detector;
-  final RecipePicker picker;
+  final ChefBrain chefBrain;
+  final RecipeGenerator generator;
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
@@ -127,9 +136,11 @@ class _HomeScreenState extends State<HomeScreen> {
   void _openCheckScreen(Uint8List bytes) {
     Navigator.of(context).push(
       MaterialPageRoute<void>(
+        settings: const RouteSettings(name: 'check'),
         builder: (BuildContext context) => CheckFoodScreen(
           detector: widget.detector,
-          picker: widget.picker,
+          chefBrain: widget.chefBrain,
+          generator: widget.generator,
           photoBytes: bytes,
         ),
       ),
@@ -139,13 +150,46 @@ class _HomeScreenState extends State<HomeScreen> {
   void _openManualFoods() {
     Navigator.of(context).push(
       MaterialPageRoute<void>(
+        settings: const RouteSettings(name: 'check'),
         builder: (BuildContext context) => CheckFoodScreen(
           detector: widget.detector,
-          picker: widget.picker,
+          chefBrain: widget.chefBrain,
+          generator: widget.generator,
           autoDetect: false,
         ),
       ),
     );
+  }
+
+  void _openSettings() {
+    Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (BuildContext context) => SettingsScreen(
+          chefBrain: widget.chefBrain,
+          generator: widget.generator,
+        ),
+      ),
+    );
+  }
+
+  Future<void> _openChefBrain() async {
+    await Navigator.of(context).push<bool>(
+      MaterialPageRoute<bool>(
+        builder: (BuildContext context) =>
+            ModelDownloadScreen(chefBrain: widget.chefBrain),
+      ),
+    );
+    if (mounted) {
+      await widget.chefBrain.refresh();
+    }
+  }
+
+  void _handleChefBrainTap() {
+    if (widget.chefBrain.isReady) {
+      _openSettings();
+      return;
+    }
+    unawaited(_openChefBrain());
   }
 
   Future<void> _showPickerProblem(ImageSource source) async {
@@ -223,7 +267,10 @@ class _HomeScreenState extends State<HomeScreen> {
     return Scaffold(
       body: SafeArea(
         child: AnimatedBuilder(
-          animation: widget.detector,
+          animation: Listenable.merge(<Listenable>[
+            widget.detector,
+            widget.chefBrain,
+          ]),
           builder: (BuildContext context, Widget? child) {
             return LayoutBuilder(
               builder: (BuildContext context, BoxConstraints constraints) {
@@ -249,12 +296,19 @@ class _HomeScreenState extends State<HomeScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
+              _TopBar(onSettings: _openSettings),
+              const SizedBox(height: 4),
               _MascotHeader(centered: true),
               const SizedBox(height: 20),
               _ModelBanner(
                 detector: widget.detector,
                 onRetry: widget.detector.loadModel,
                 onManual: _openManualFoods,
+              ),
+              const SizedBox(height: 16),
+              _ChefBrainBanner(
+                chefBrain: widget.chefBrain,
+                onTap: _handleChefBrainTap,
               ),
               const SizedBox(height: 16),
               _ActionButtons(
@@ -306,10 +360,17 @@ class _HomeScreenState extends State<HomeScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
+                    _TopBar(onSettings: _openSettings),
+                    const SizedBox(height: 4),
                     _ModelBanner(
                       detector: widget.detector,
                       onRetry: widget.detector.loadModel,
                       onManual: _openManualFoods,
+                    ),
+                    const SizedBox(height: 16),
+                    _ChefBrainBanner(
+                      chefBrain: widget.chefBrain,
+                      onTap: _handleChefBrainTap,
                     ),
                     const SizedBox(height: 16),
                     _ActionButtons(
@@ -329,6 +390,123 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ),
       ],
+    );
+  }
+}
+
+/// Settings stays out of the way in the top corner.
+class _TopBar extends StatelessWidget {
+  const _TopBar({required this.onSettings});
+
+  final VoidCallback onSettings;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.end,
+      children: <Widget>[
+        SizedBox(
+          width: 56,
+          height: 56,
+          child: IconButton.filledTonal(
+            onPressed: onSettings,
+            tooltip: AppStrings.settings,
+            icon: const Icon(Icons.settings_outlined, size: 28),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+/// A small card that shows whether the AI chef is ready.
+class _ChefBrainBanner extends StatelessWidget {
+  const _ChefBrainBanner({required this.chefBrain, required this.onTap});
+
+  final ChefBrain chefBrain;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final ColorScheme colors = Theme.of(context).colorScheme;
+    final ChefBrainStatus status = chefBrain.status;
+    final bool ready = status == ChefBrainStatus.ready;
+    final bool downloading = status == ChefBrainStatus.downloading;
+    final bool failed = status == ChefBrainStatus.failed;
+    final Color background = ready
+        ? colors.primaryContainer
+        : failed
+        ? colors.errorContainer
+        : colors.secondaryContainer;
+
+    final String title = switch (status) {
+      ChefBrainStatus.ready => AppStrings.chefBrainReady,
+      ChefBrainStatus.missing => AppStrings.chefBrainMissing,
+      ChefBrainStatus.downloading => AppStrings.chefBrainDownloading,
+      ChefBrainStatus.failed => AppStrings.chefBrainFailed,
+      ChefBrainStatus.checking => AppStrings.chefBrainChecking,
+    };
+
+    return Semantics(
+      button: true,
+      label: title,
+      child: Material(
+        color: background,
+        borderRadius: BorderRadius.circular(22),
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(22),
+          child: Padding(
+            padding: const EdgeInsets.all(14),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: <Widget>[
+                Row(
+                  children: <Widget>[
+                    const ExcludeSemantics(
+                      child: Text('🧠', style: TextStyle(fontSize: 30)),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: <Widget>[
+                          Text(
+                            title,
+                            style: Theme.of(context).textTheme.titleMedium,
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            ready
+                                ? AppStrings.chefBrainReadyBody
+                                : AppStrings.chefBrainMissingBody,
+                            style: Theme.of(context).textTheme.bodySmall,
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Icon(
+                      ready ? Icons.check_circle : Icons.download,
+                      color: colors.onSecondaryContainer,
+                    ),
+                  ],
+                ),
+                if (downloading) ...<Widget>[
+                  const SizedBox(height: 10),
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(20),
+                    child: LinearProgressIndicator(
+                      value: chefBrain.progress / 100,
+                      minHeight: 10,
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          ),
+        ),
+      ),
     );
   }
 }
@@ -550,7 +728,7 @@ class _OfflineBadge extends StatelessWidget {
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        Icon(Icons.wifi_off, size: 20, color: colors.onSurfaceVariant),
+        Icon(Icons.download_done, size: 20, color: colors.onSurfaceVariant),
         const SizedBox(width: 8),
         Flexible(
           child: Text(

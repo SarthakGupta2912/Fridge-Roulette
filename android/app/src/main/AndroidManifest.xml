@@ -1,25 +1,20 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
-    <!-- Fridge Roulette works fully offline. Remove any permission a plugin adds. -->
-    <uses-permission
-        android:name="android.permission.INTERNET"
-        tools:node="remove" />
+    <!-- Internet is used only once, to download the AI recipe model.
+         After that the app works fully offline. -->
+    <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission
         android:name="android.permission.CAMERA"
         tools:node="remove" />
-    <!-- Library dependencies mention background work and network state.
-         This app does neither, so keep the permission list short. -->
-    <uses-permission
-        android:name="android.permission.ACCESS_NETWORK_STATE"
-        tools:node="remove" />
+    <!-- The downloader checks the network and keeps the phone awake while the
+         one-time file finishes. There is no analytics, ads or other network use. -->
+    <!-- Library dependencies mention a foreground service for downloads.
+         This app downloads only while its own screen is open. -->
     <uses-permission
         android:name="android.permission.FOREGROUND_SERVICE"
         tools:node="remove" />
     <uses-permission
         android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC"
-        tools:node="remove" />
-    <uses-permission
-        android:name="android.permission.WAKE_LOCK"
         tools:node="remove" />
     <uses-permission
         android:name="android.permission.RECEIVE_BOOT_COMPLETED"

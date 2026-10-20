@@ -1,36 +1,36 @@
-/// One recipe challenge the child can cook.
+/// One recipe written by the AI chef or the quick chef.
 class Recipe {
   const Recipe({
-    required this.id,
-    required this.name,
+    required this.title,
     required this.emoji,
-    required this.requiredFoods,
-    this.optionalFoods = const [],
     required this.minutes,
-    required this.difficulty,
-    required this.twist,
+    required this.level,
     required this.steps,
-    this.isMixAndMatch = false,
+    required this.tip,
+    this.foods = const <String>[],
+    this.rawText = '',
+    this.isAi = false,
   });
 
-  final String id;
-  final String name;
+  final String title;
   final String emoji;
-
-  /// Foods that must be in the fridge. Empty means a mix-and-match idea.
-  final List<String> requiredFoods;
-
-  /// Nice extras. The child does not need these.
-  final List<String> optionalFoods;
-
   final int minutes;
 
-  /// 1 is easy, 2 is medium, 3 is a bigger challenge.
-  final int difficulty;
+  /// Easy, Medium or Tricky.
+  final String level;
 
-  final String twist;
   final List<String> steps;
+  final String tip;
 
-  /// True for a simple snack the app makes up from two safe foods.
-  final bool isMixAndMatch;
+  /// The foods the child had in the fridge.
+  final List<String> foods;
+
+  /// The model's original words. Kept so we can show them if parsing fails.
+  final String rawText;
+
+  /// True when this came from the on-device language model.
+  final bool isAi;
+
+  /// A friendly alias used by older widgets.
+  String get name => title;
 }
