@@ -139,9 +139,10 @@ The app is designed for children around 6-12 and their families.
 
 ```text
 Small polish update.
+* Fixed the AI chef download closing the app on newer Android versions
 * Download progress starts faster and explains the notification choice first
 * Choose Allow for a progress notification, or Not now to keep the screen open
-* Clearer download errors and retry
+* Clearer download errors and retry, even if the download never starts
 * Recipe text now shows plain English while it is being written
 * No more visible \n codes or HTML tags in the live recipe
 ```

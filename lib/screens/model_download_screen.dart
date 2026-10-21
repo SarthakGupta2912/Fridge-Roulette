@@ -42,11 +42,30 @@ class _ModelDownloadScreenState extends State<ModelDownloadScreen> {
   @override
   void initState() {
     super.initState();
+    widget.chefBrain.addListener(_handleBrainChange);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
         unawaited(_refreshStatus());
       }
     });
+  }
+
+  @override
+  void dispose() {
+    widget.chefBrain.removeListener(_handleBrainChange);
+    super.dispose();
+  }
+
+  void _handleBrainChange() {
+    if (!mounted) {
+      return;
+    }
+    // The download service can report a failure without completing its
+    // Future (for example when Android refuses to start the worker). Clear
+    // the button's busy flag so Try again is tappable right away.
+    if (_starting && widget.chefBrain.status == ChefBrainStatus.failed) {
+      setState(() => _starting = false);
+    }
   }
 
   Future<void> _refreshStatus() async {

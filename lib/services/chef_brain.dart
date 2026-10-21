@@ -130,6 +130,8 @@ class ChefBrain extends ChangeNotifier {
   Future<void>? _initFuture;
   bool _initialized = false;
   bool _usesForeground = true;
+  int _initAttempt = 0;
+  int _downloadRun = 0;
 
   ChefBrainStatus get status => _status;
   String? get error => _error;
@@ -192,17 +194,36 @@ class ChefBrain extends ChangeNotifier {
   }
 
   Future<void> _initializeOnce() async {
+    final int attempt = ++_initAttempt;
     try {
       await FlutterEdgeAi.initialize(
         inferenceEngines: const <InferenceEngineProvider>[MediaPipeEngine()],
         // Show a friendly error after a few tries instead of keeping a child
         // waiting through the plugin's default ten long back-offs.
         maxDownloadRetries: 3,
-      );
+      ).timeout(const Duration(seconds: 30));
+      if (attempt != _initAttempt) {
+        return;
+      }
       _initialized = true;
       await refresh();
+    } on TimeoutException catch (error) {
+      debugPrint('The AI chef took too long to wake up: $error');
+      if (attempt != _initAttempt) {
+        return;
+      }
+      // Let the next attempt try again instead of replaying this failure.
+      _initFuture = null;
+      _initialized = false;
+      _status = ChefBrainStatus.failed;
+      _error = 'The AI chef took too long to wake up.';
+      _problem = ChefBrainProblem.startup;
+      notifyListeners();
     } catch (error) {
       debugPrint('Could not start the AI chef: $error');
+      if (attempt != _initAttempt) {
+        return;
+      }
       // Let the next attempt try again instead of replaying this failure.
       _initFuture = null;
       _initialized = false;
@@ -262,10 +283,32 @@ class ChefBrain extends ChangeNotifier {
     _progress = 0;
     _error = null;
     _problem = null;
+    final int run = ++_downloadRun;
     notifyListeners();
 
     final CancelToken token = CancelToken();
     _cancelToken = token;
+    bool timedOut = false;
+
+    // Android can silently fail to start a background task. The plugin only
+    // waits for work-manager events, so a failed start would otherwise leave
+    // the child on "Connecting..." forever. Give the first byte 60 seconds,
+    // then cancel and show the friendly server message.
+    final Timer startTimer = Timer(const Duration(seconds: 60), () {
+      if (run != _downloadRun ||
+          _status != ChefBrainStatus.downloading ||
+          _progress > 0) {
+        return;
+      }
+      timedOut = true;
+      _status = ChefBrainStatus.failed;
+      _progress = 0;
+      _error = 'The download did not start in time.';
+      _problem = ChefBrainProblem.server;
+      token.cancel('The download did not start in time.');
+      notifyListeners();
+    });
+
     try {
       await FlutterEdgeAi.installModel(
             modelType: ModelType.qwen,
@@ -276,29 +319,44 @@ class ChefBrain extends ChangeNotifier {
           // calling this, so the download does not pause on a surprise prompt.
           .fromNetwork(ModelInfo.downloadUrl, foreground: useForeground)
           .withProgress((int percent) {
+            if (run != _downloadRun || timedOut) {
+              return;
+            }
             _progress = percent.clamp(0, 100);
             notifyListeners();
           })
           .withCancelToken(token)
           .install();
+      if (run != _downloadRun || timedOut) {
+        return;
+      }
       _status = ChefBrainStatus.ready;
       _progress = 100;
       _error = null;
       _problem = null;
     } on DownloadCancelledException {
+      if (run != _downloadRun || timedOut) {
+        return;
+      }
       _status = ChefBrainStatus.missing;
       _progress = 0;
       _error = null;
       _problem = ChefBrainProblem.cancelled;
     } catch (error) {
+      if (run != _downloadRun || timedOut) {
+        return;
+      }
       _status = ChefBrainStatus.failed;
       _progress = 0;
       _error = error.toString();
       _problem = classifyDownloadError(error);
       throw ChefBrainException(_problem!, _error!, error);
     } finally {
-      _cancelToken = null;
-      notifyListeners();
+      startTimer.cancel();
+      if (run == _downloadRun) {
+        _cancelToken = null;
+        notifyListeners();
+      }
     }
   }
 

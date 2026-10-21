@@ -25,7 +25,7 @@ Made for children around 10 years old, with big buttons, short sentences, emoji,
 
 The model is **not bundled** in the APK or AAB. The app offers the download on the first recipe request or from **Settings > Chef brain**. It is stored in the app's private storage and reused offline after that. The child can delete it from Settings to free the space.
 
-The download runs in an Android foreground service, so a progress notification stays visible if the child leaves the app. On Android 13 and newer the download screen first explains why it wants notification permission, then shows Android's permission pop-up. Choosing **Allow notifications** gives a progress notification even if the app is switched away. Choosing **Not now** starts the same download with no notification and shows a **keep this screen open** hint instead. The app never asks for permission in the middle of starting the transfer, so the download does not sit on a long "starting" step while a hidden permission prompt waits. A quick DNS check shows the no-internet card immediately, and the downloader stops after 3 retries with a friendly server, storage, or interruption message.
+The download runs in an Android foreground service, so a progress notification stays visible if the child leaves the app. The manifest declares WorkManager's `SystemForegroundService` with the `dataSync` type, which Android 14 and newer require before they will start the service. On Android 13 and newer the download screen first explains why it wants notification permission, then shows Android's permission pop-up. Choosing **Allow notifications** gives a progress notification even if the app is switched away. Choosing **Not now** starts the same download with no notification and shows a **keep this screen open** hint instead. The app never asks for permission in the middle of starting the transfer, so the download does not sit on a long "starting" step while a hidden permission prompt waits. A quick DNS check shows the no-internet card immediately, and the downloader stops after 3 retries with a friendly server, storage, or interruption message.
 
 The app uses the MediaPipe engine from `flutter_edge_ai_mediapipe`, which keeps Android 7.0 (`minSdk 24`) support. The model is loaded only while a recipe is being written. It uses the CPU first because the GPU path returned broken tokens on the test tablet; the GPU is only a fallback. The prompt is wrapped in Qwen's ChatML markers and decoded greedily for stable text. Generation streams token by token, stops after 60 seconds or 340 tokens, and releases the model when the child leaves the recipe screen or the app stays in the background.
 
@@ -118,7 +118,7 @@ flutter analyze
 flutter test
 ```
 
-The suite has 59 tests:
+The suite has 60 tests:
 
 - prompt contains the foods, basics, recent names, safety rules, and the fixed format;
 - parser handles a well-formed recipe, messy stars/lowercase/missing emoji, missing `STEPS`, literal `\n` text, a repeated title word, and invented-food detection;
@@ -143,8 +143,8 @@ flutter build appbundle --release
 
 Artifacts (current build):
 
-- `build\app\outputs\flutter-apk\app-release.apk` - universal APK, 98,766,485 bytes (94.2 MiB), SHA-256 `AB4E1673482F5CCB94EA3E3EE95A7B59B51493CBC7D92A0CB7EEBA80F7DA2C26`
-- `build\app\outputs\bundle\release\app-release.aab` - Play bundle, 160,635,615 bytes (153.2 MiB), SHA-256 `157D605FB0A3BAD74DFD38EA6AAD78D63976F130C563CA642F0E534F111C2B56`
+- `build\app\outputs\flutter-apk\app-release.apk` - universal APK, 98,774,817 bytes (94.2 MiB), SHA-256 `055F31AFAE0F6C5F530F3DCFA79FF570D85F2D20A8D7EFF6CFDA530B759580F2`
+- `build\app\outputs\bundle\release\app-release.aab` - Play bundle, 160,653,775 bytes (153.2 MiB), SHA-256 `9E3F01A2987F6A7DE8015D275B4F9FCFF1ED950DD4D310100317E72DE7851F09`
 
 The AI recipe model is not inside either file. The size comes from the MediaPipe/Flutter AI native libraries for three ABIs, the two bundled food models, and ML Kit's on-device OCR model. Native libraries are stored compressed in the APK. Play delivers only the needed pieces from the AAB. For a smaller direct-install APK, use:
 
@@ -206,9 +206,9 @@ All visible text belongs in `lib/strings.dart`.
 - Detection works best with good light and an open fridge door. Boxes show only the first box for each food. A careful scan can take up to two minutes on a slow device.
 - Dark, clear bottles, and some packages may be missed or labeled "Juice or Drink". Labels must be readable and in Latin script (English or French words are mapped best).
 - AI recipes are generated, not reviewed one by one. The prompt restricts ingredients and gives safety rules, but a grown-up should still check allergies and cooking steps.
-- The universal release APK is 98,766,485 bytes (94.2 MiB) because it contains MediaPipe and ML Kit native libraries for `arm64-v8a`, `armeabi-v7a`, and `x86_64`, plus the two food models. It stays under the 100 MB APK limit, but there is little room left. Use the AAB for Play (153.2 MiB) and split APKs for smaller test installs.
+- The universal release APK is 98,774,817 bytes (94.2 MiB) because it contains MediaPipe and ML Kit native libraries for `arm64-v8a`, `armeabi-v7a`, and `x86_64`, plus the two food models. It stays under the 100 MB APK limit, but there is little room left. Use the AAB for Play (153.2 MiB) and split APKs for smaller test installs.
 - On Android 13 and newer, Android's notification-permission pop-up can briefly cover the app. The download screen now explains this before the download starts and offers **Not now**; the download only starts after that choice. The Android 12 tablet cannot show the Android 13 permission dialog, so the exact pop-up was verified through the widget tests and the permission flow, not on a physical Android 13 phone.
-- The dual-model scan, package-label reader, 521 MB download, progress notification, no-internet card, retry, live MediaPipe generation, and the new plain-text streaming cleanup were verified on a Samsung SM-T865 tablet. A low-end phone, TalkBack, and the system-camera path still need a final device test.
+- The dual-model scan, package-label reader, 521 MB download, progress notification, no-internet card, retry, live MediaPipe generation, and the new plain-text streaming cleanup were verified on a Samsung SM-T865 tablet. The 1.0.1+2 chef-brain download was re-tested end to end on that tablet: delete, download from 0% to 100%, foreground notification, ready screen, and no crash. The tablet runs Android 12, so the Android 14+ foreground-service declaration still needs a check on a newer phone. A low-end phone, TalkBack, and the system-camera path also still need a final device test.
 - The Ultralytics plugin still applies the Kotlin Gradle Plugin, so Flutter prints a future-compatibility warning at build time. Watch the plugin for an update.
 - The recipe set is entertainment, not medical or allergy advice. Always check ingredients for allergies.
 

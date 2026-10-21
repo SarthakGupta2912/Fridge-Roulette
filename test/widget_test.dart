@@ -101,14 +101,21 @@ ChefBrain readyBrain() {
 
 /// A chef brain whose download can be driven by the test.
 class FakeChefBrain extends ChefBrain {
-  FakeChefBrain({ChefBrainStatus initial = ChefBrainStatus.missing})
-    : _fakeStatus = initial,
-      super(initialStatus: initial);
+  FakeChefBrain({
+    ChefBrainStatus initial = ChefBrainStatus.missing,
+    this.downloadGate,
+  }) : _fakeStatus = initial,
+       super(initialStatus: initial);
+
+  /// When set, the fake stays in the downloading state until the test
+  /// completes this gate, so a mid-download failure can be checked.
+  final Completer<void>? downloadGate;
 
   ChefBrainStatus _fakeStatus;
   int _fakeProgress = 0;
   ChefBrainProblem? _fakeProblem;
   bool downloadCalled = false;
+  int downloadCount = 0;
   bool notificationPermissionGranted = true;
   bool notificationRequestGranted = true;
   bool _fakeUsesForeground = true;
@@ -147,11 +154,13 @@ class FakeChefBrain extends ChefBrain {
   @override
   Future<void> download({bool useForeground = true}) async {
     downloadCalled = true;
+    downloadCount++;
     _fakeUsesForeground = useForeground;
     _fakeStatus = ChefBrainStatus.downloading;
     _fakeProgress = 0;
     _fakeProblem = null;
     notifyListeners();
+    await downloadGate?.future;
   }
 
   @override
@@ -798,6 +807,39 @@ void main() {
       expect(find.textContaining('42%'), findsOneWidget);
       bar = tester.widget(find.byType(LinearProgressIndicator));
       expect(bar.value, closeTo(0.42, 0.001));
+      expectNoLayoutError(tester);
+    });
+
+    testWidgets('a failed start lets the child try again', (
+      WidgetTester tester,
+    ) async {
+      final Completer<void> gate = Completer<void>();
+      final FakeChefBrain brain = FakeChefBrain(downloadGate: gate);
+      await pumpScreen(
+        tester,
+        ModelDownloadScreen(chefBrain: brain),
+        size: const Size(360, 640),
+        textScale: 1.5,
+      );
+      await tester.pumpAndSettle();
+
+      await tapVisible(tester, find.text(AppStrings.downloadButton));
+      await tester.pump();
+      expect(find.text(AppStrings.downloadStarting), findsOneWidget);
+
+      // The Android worker can fail after the screen has already entered its
+      // busy state. The retry button must become usable immediately.
+      brain.failWith(ChefBrainProblem.server);
+      await tester.pump();
+      expect(find.text(AppStrings.downloadServerTitle), findsOneWidget);
+      expect(find.text(AppStrings.downloadTryAgain), findsOneWidget);
+
+      await tapVisible(tester, find.text(AppStrings.downloadTryAgain));
+      await tester.pump();
+      expect(brain.downloadCount, 2);
+
+      gate.complete();
+      await tester.pump();
       expectNoLayoutError(tester);
     });
 
