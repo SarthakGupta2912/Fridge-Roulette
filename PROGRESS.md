@@ -65,7 +65,7 @@ This file is my checklist. I update it after every phase.
 - [x] flutter analyze clean
 - [x] flutter test passing (60 tests)
 - [x] Release APK built (70,174,290 bytes / 66.9 MiB)
-- [x] Release AAB built (70,875,699 bytes / 67.6 MiB, below the 90 MB target)
+- [x] Release AAB built (79,811,211 bytes / 76.1 MiB, below the 90 MB target)
 - [x] Split APKs built for smaller test installs
 - [x] Merged manifest checked
 - [x] README, RELEASE, STORE_LISTING, PRIVACY_POLICY, and PROGRESS docs updated
@@ -86,7 +86,7 @@ This file is my checklist. I update it after every phase.
 | Analyze | No issues |
 | Tests | 60 passed |
 | Release APK (universal) | `build/app/outputs/flutter-apk/app-release.apk` (70,174,290 bytes / 66.9 MiB) |
-| Release AAB | `build/app/outputs/bundle/release/app-release.aab` (70,875,699 bytes / 67.6 MiB) |
+| Release AAB | `build/app/outputs/bundle/release/app-release.aab` (79,811,211 bytes / 76.1 MiB) |
 | Release permissions | INTERNET (one-time model download), ACCESS_NETWORK_STATE, WAKE_LOCK, FOREGROUND_SERVICE, FOREGROUND_SERVICE_DATA_SYNC, POST_NOTIFICATIONS, private receiver permission |
 | Release signer | Upload key shared with invoice_management_system, CN=Sarthak, OU=PathKosh |
 | Food models | COCO detector 2.9 MB + FoodSeg103 segmenter 14.6 MB, bundled |
@@ -116,7 +116,7 @@ This file is my checklist. I update it after every phase.
 - **Splash:** A native Android splash plus a short in-app splash while the detector loads; no extra package.
 - **Build fix:** Kotlin incremental compilation is disabled because the pub cache is on `C:` and the project is on `D:`, which caused cache-root build failures.
 - **Signing:** The upload keystore was replaced with the one from `invoice_management_system` (alias `upload`). `android/key.properties` and the JKS are gitignored and must be backed up; they are not in the repository.
-- **Size:** The universal APK is 70,174,290 bytes (66.9 MiB) and the AAB is 70,875,699 bytes (67.6 MiB). Native libraries are stored compressed, three unused MediaPipe image-generator libraries are excluded, native debug symbol files are omitted, and the `x86_64` emulator/Chromebook ABI is excluded. `arm64-v8a` and `armeabi-v7a` phones and tablets remain supported. Build the AAB with `cd android; .\gradlew.bat bundleRelease` because Flutter's appbundle post-check expects the debug symbols that this release deliberately drops.
+- **Size:** The universal APK is 70,174,290 bytes (66.9 MiB) and the AAB is 79,811,211 bytes (76.1 MiB). Native libraries are stored compressed, three unused MediaPipe image-generator libraries are excluded, and the `x86_64` emulator/Chromebook ABI is excluded. `arm64-v8a` and `armeabi-v7a` phones and tablets remain supported. The AAB keeps only the `arm64-v8a` Flutter engine and Dart AOT symbol tables; a Gradle step removes the other extracted native symbol files so `flutter build appbundle` passes its post-check while staying under 90 MB.
 - **R8:** ML Kit's plugin mentions optional Chinese, Devanagari, Japanese, and Korean recognizers that are not bundled. `proguard-rules.pro` suppresses those missing-class warnings and keeps Kotlin coroutine/Result classes, the downloader, and the ML Kit registrars that JNI and manifest metadata load by name. Only Latin OCR ships.
 
 ## Still to do outside the codebase

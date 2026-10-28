@@ -58,11 +58,11 @@ android {
             isMinifyEnabled = true
             isShrinkResources = true
 
-            // Native debug symbol files added about 65 MB to the raw AAB.
-            // They are not part of the installed app; keep them out of the
-            // Play bundle so the upload stays small.
+            // Extract symbol tables so Flutter's appbundle post-check can find
+            // the engine and Dart AOT symbols. The task below then removes the
+            // much larger third-party symbol files before the bundle is packed.
             ndk {
-                debugSymbolLevel = "none"
+                debugSymbolLevel = "symbol_table"
             }
 
             proguardFiles(
@@ -93,6 +93,30 @@ android {
                 "lib/x86_64/**",
             )
         }
+    }
+}
+
+// Keep only the Flutter engine and Dart AOT symbol files in the Play bundle.
+// Flutter's `build appbundle` check requires these two files, while the other
+// native libraries' full symbols are large and not needed for normal crashes.
+tasks.matching { it.name == "extractReleaseNativeSymbolTables" }.configureEach {
+    doLast {
+        val symbolRoot = layout.buildDirectory
+            .dir("intermediates/native_symbol_tables/release/extractReleaseNativeSymbolTables/out")
+            .get()
+            .asFile
+        val keep = setOf(
+            "arm64-v8a/libflutter.so.sym",
+            "arm64-v8a/libapp.so.sym",
+        )
+        symbolRoot.walkTopDown()
+            .filter { it.isFile && it.extension == "sym" }
+            .forEach { file ->
+                val relative = file.relativeTo(symbolRoot).invariantSeparatorsPath
+                if (relative !in keep) {
+                    file.delete()
+                }
+            }
     }
 }
 

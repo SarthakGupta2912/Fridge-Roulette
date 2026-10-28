@@ -71,12 +71,7 @@ Expected: no formatting changes, no analyzer issues, 60 passing tests.
 flutter clean
 flutter pub get
 flutter build apk --release
-
-# Flutter's `build appbundle` post-check expects native .sym files. The release
-# config deliberately leaves them out, so build the signed AAB with Gradle.
-cd android
-.\gradlew.bat bundleRelease
-cd ..
+flutter build appbundle --release
 ```
 
 Optional smaller test APKs:
@@ -90,17 +85,17 @@ Outputs:
 | Artifact | Path | Size (current build) |
 | --- | --- | --- |
 | Release APK (universal) | `build\app\outputs\flutter-apk\app-release.apk` | 70,174,290 bytes (66.9 MiB) |
-| Release AAB | `build\app\outputs\bundle\release\app-release.aab` | 70,875,699 bytes (67.6 MiB) |
+| Release AAB | `build\app\outputs\bundle\release\app-release.aab` | 79,811,211 bytes (76.1 MiB) |
 
 The AI recipe model is **not** in either file. The size comes from the MediaPipe/Flutter AI native libraries for `arm64-v8a` and `armeabi-v7a`, the two bundled food models, and ML Kit's bundled Latin OCR model. The AAB lets Play deliver only the needed pieces. The universal APK contains both ARM ABIs and is below the 90 MB target.
 
-The `x86_64` libraries are excluded because they are only useful for desktop emulators and were the largest ABI. Native debug symbols are also excluded; upload them separately to Play only if native crash symbolication is needed. Both 64-bit and 32-bit ARM phones and tablets remain supported.
+The `x86_64` libraries are excluded because they are only useful for desktop emulators and were the largest ABI. The AAB keeps only the Flutter engine and Dart AOT symbol tables; the larger third-party native symbol files are removed after extraction by a Gradle step. That keeps Flutter's `build appbundle` post-check happy without pushing the bundle over 90 MB. Both 64-bit and 32-bit ARM phones and tablets remain supported.
 
 SHA-256 checksums for this build:
 
 ```text
-app-release.apk  B68C0760AA4D0C7FE26FDD9C4CB9A59BA5077514BD0166044AB1F129B6D77045
-app-release.aab  74CAFEC64AB81A4DE279C2E0DA4F8A0914A0A6BC50B664883F0124C18707E4C5
+app-release.apk  CBADE174C4C2921AC1550E14BF61A9E617529D55FF4C835D6AF2F7139396C633
+app-release.aab  9E6D9E83B7EC9A5B5C402F350E62FD7B162D414EF4497FD872C176F796A00A5A
 ```
 
 If you rebuild, the checksums change. Recompute with:
@@ -262,7 +257,7 @@ Suggested shot list: Home, detection result with boxes, food chips, spinning whe
 
 - Flutter prints a warning that `ultralytics_yolo` still applies the Kotlin Gradle Plugin. The build succeeds today; upgrade the plugin when it supports Flutter's built-in Kotlin.
 - Kotlin incremental compilation is disabled in `android/gradle.properties` because the pub cache and project are on different drives, which otherwise breaks the build with a "different roots" cache error.
-- The universal APK is 70,174,290 bytes (66.9 MiB) and the AAB is 70,875,699 bytes (67.6 MiB). Both are below the 90 MB target. `x86_64` emulator/Chromebook support and native debug symbols were removed to reach this size; keep an ARM device for release smoke tests.
-- `flutter build appbundle --release` stops after Gradle with "failed to strip debug symbols" because Flutter expects `.sym` files, while the release config deliberately sets `debugSymbolLevel = "none"`. The signed AAB is already produced; use `cd android` and `.\gradlew.bat bundleRelease`. Re-enabling full symbols would add about 65 MB and push the AAB over 90 MB.
+- The universal APK is 70,174,290 bytes (66.9 MiB) and the AAB is 79,811,211 bytes (76.1 MiB). Both are below the 90 MB target. `x86_64` emulator/Chromebook support was removed to reach this size; keep an ARM device for release smoke tests.
+- The release keeps only the `arm64-v8a` Flutter engine and Dart AOT symbol tables in the bundle. A Gradle step trims the other extracted `.sym` files after symbol extraction, which lets `flutter build appbundle` pass its post-check while keeping the AAB under 90 MB. Re-enabling all native symbols would add about 30 MB and push the AAB over the target.
 - ML Kit OCR is bundled for Latin script only. The other script options are referenced by the plugin but intentionally not shipped; the ProGuard rules suppress their missing-class warnings.
 - The dual-model scan, label reader, 521 MiB download, foreground notification, in-app notification explanation, no-internet card, retry, live MediaPipe generation, and plain-text streaming cleanup were verified on a Samsung SM-T865 tablet. The 1.0.1+2 delete-and-redownload flow was re-tested end to end on that tablet: 0% to 100%, progress notification, ready screen, and no crash. The tablet runs Android 12, so the Android 13+ system permission pop-up and the Android 14+ foreground-service declaration still need a newer phone. Still needed before publishing: a low-end phone, TalkBack, the system-camera path, and a real low-storage test. The AI recipe generator was switched to CPU-first because the GPU path returned broken tokens on the test tablet.
