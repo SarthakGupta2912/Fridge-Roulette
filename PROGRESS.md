@@ -64,8 +64,8 @@ This file is my checklist. I update it after every phase.
 ## Phase 8 - Test, build and docs
 - [x] flutter analyze clean
 - [x] flutter test passing (60 tests)
-- [x] Release APK built (98,774,817 bytes, under 100 MB)
-- [x] Release AAB built (160,653,775 bytes)
+- [x] Release APK built (70,174,290 bytes / 66.9 MiB)
+- [x] Release AAB built (70,875,699 bytes / 67.6 MiB, below the 90 MB target)
 - [x] Split APKs built for smaller test installs
 - [x] Merged manifest checked
 - [x] README, RELEASE, STORE_LISTING, PRIVACY_POLICY, and PROGRESS docs updated
@@ -85,14 +85,14 @@ This file is my checklist. I update it after every phase.
 | Flutter / Dart | 3.44.6 / 3.12.2 |
 | Analyze | No issues |
 | Tests | 60 passed |
-| Release APK (universal) | `build/app/outputs/flutter-apk/app-release.apk` (98,774,817 bytes / 94.2 MiB) |
-| Release AAB | `build/app/outputs/bundle/release/app-release.aab` (160,653,775 bytes / 153.2 MiB) |
+| Release APK (universal) | `build/app/outputs/flutter-apk/app-release.apk` (70,174,290 bytes / 66.9 MiB) |
+| Release AAB | `build/app/outputs/bundle/release/app-release.aab` (70,875,699 bytes / 67.6 MiB) |
 | Release permissions | INTERNET (one-time model download), ACCESS_NETWORK_STATE, WAKE_LOCK, FOREGROUND_SERVICE, FOREGROUND_SERVICE_DATA_SYNC, POST_NOTIFICATIONS, private receiver permission |
 | Release signer | Upload key shared with invoice_management_system, CN=Sarthak, OU=PathKosh |
 | Food models | COCO detector 2.9 MB + FoodSeg103 segmenter 14.6 MB, bundled |
 | Package labels | ML Kit Latin OCR, bundled, on-device |
 | AI model | Qwen2.5 0.5B Instruct, 521 MiB, Apache-2.0, downloaded once, not bundled |
-| Device check | Samsung SM-T865 (Android 12): dual-model scan, OCR, live AI recipe generation, and the 1.0.1+2 delete-and-redownload flow verified end to end (0% to 100%, foreground notification, ready screen, no crash); low-end phone, TalkBack, Android 13+ permission pop-up, Android 14+ foreground-service fix, and system camera still pending |
+| Device check | Samsung SM-T865 (Android 12): dual-model scan, OCR, live AI recipe generation, and the 1.0.1+2 delete-and-redownload flow verified end to end (0% to 100%, foreground notification, ready screen, no crash). The size-optimized ARM-only build was validated with bundletool and its APK signature was checked, but the tablet was disconnected before a smoke test; low-end phone, TalkBack, Android 13+ permission pop-up, Android 14+ foreground-service fix, and system camera still pending |
 
 ## Decisions I made along the way
 
@@ -116,7 +116,7 @@ This file is my checklist. I update it after every phase.
 - **Splash:** A native Android splash plus a short in-app splash while the detector loads; no extra package.
 - **Build fix:** Kotlin incremental compilation is disabled because the pub cache is on `C:` and the project is on `D:`, which caused cache-root build failures.
 - **Signing:** The upload keystore was replaced with the one from `invoice_management_system` (alias `upload`). `android/key.properties` and the JKS are gitignored and must be backed up; they are not in the repository.
-- **Size:** The universal APK is 98,774,817 bytes (94.2 MiB). Native libraries are stored compressed, and three unused MediaPipe image-generator libraries are excluded. The AAB is 160,653,775 bytes and Play splits it by device. Split APKs are available for smaller test installs. The APK is under 100 MB but has little room for another model.
+- **Size:** The universal APK is 70,174,290 bytes (66.9 MiB) and the AAB is 70,875,699 bytes (67.6 MiB). Native libraries are stored compressed, three unused MediaPipe image-generator libraries are excluded, native debug symbol files are omitted, and the `x86_64` emulator/Chromebook ABI is excluded. `arm64-v8a` and `armeabi-v7a` phones and tablets remain supported. Build the AAB with `cd android; .\gradlew.bat bundleRelease` because Flutter's appbundle post-check expects the debug symbols that this release deliberately drops.
 - **R8:** ML Kit's plugin mentions optional Chinese, Devanagari, Japanese, and Korean recognizers that are not bundled. `proguard-rules.pro` suppresses those missing-class warnings and keeps Kotlin coroutine/Result classes, the downloader, and the ML Kit registrars that JNI and manifest metadata load by name. Only Latin OCR ships.
 
 ## Still to do outside the codebase

@@ -57,6 +57,14 @@ android {
             }
             isMinifyEnabled = true
             isShrinkResources = true
+
+            // Native debug symbol files added about 65 MB to the raw AAB.
+            // They are not part of the installed app; keep them out of the
+            // Play bundle so the upload stays small.
+            ndk {
+                debugSymbolLevel = "none"
+            }
+
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro",
@@ -78,6 +86,11 @@ android {
                 "lib/**/libimagegenerator_gpu.so",
                 "lib/**/libmediapipe_tasks_vision_jni.so",
                 "lib/**/libmediapipe_tasks_vision_image_generator_jni.so",
+
+                // Phones and tablets use ARM. x86_64 libraries are only for
+                // desktop emulators and are the largest ABI in the bundle.
+                // Both 64-bit and 32-bit ARM devices stay supported.
+                "lib/x86_64/**",
             )
         }
     }

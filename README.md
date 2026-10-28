@@ -138,15 +138,20 @@ The project reads signing details from `android/key.properties`, which is gitign
 Copy-Item android\key.properties.example android\key.properties
 # Put your real passwords in key.properties and place upload-keystore.jks in android\app\
 flutter build apk --release
-flutter build appbundle --release
+
+# Build the AAB with Gradle. The release config intentionally leaves native
+# debug symbols out, and Flutter's `build appbundle` post-check expects them.
+cd android
+.\gradlew.bat bundleRelease
+cd ..
 ```
 
 Artifacts (current build):
 
-- `build\app\outputs\flutter-apk\app-release.apk` - universal APK, 98,774,817 bytes (94.2 MiB), SHA-256 `055F31AFAE0F6C5F530F3DCFA79FF570D85F2D20A8D7EFF6CFDA530B759580F2`
-- `build\app\outputs\bundle\release\app-release.aab` - Play bundle, 160,653,775 bytes (153.2 MiB), SHA-256 `9E3F01A2987F6A7DE8015D275B4F9FCFF1ED950DD4D310100317E72DE7851F09`
+- `build\app\outputs\flutter-apk\app-release.apk` - universal APK, 70,174,290 bytes (66.9 MiB), SHA-256 `B68C0760AA4D0C7FE26FDD9C4CB9A59BA5077514BD0166044AB1F129B6D77045`
+- `build\app\outputs\bundle\release\app-release.aab` - Play bundle, 70,875,699 bytes (67.6 MiB), SHA-256 `74CAFEC64AB81A4DE279C2E0DA4F8A0914A0A6BC50B664883F0124C18707E4C5`
 
-The AI recipe model is not inside either file. The size comes from the MediaPipe/Flutter AI native libraries for three ABIs, the two bundled food models, and ML Kit's on-device OCR model. Native libraries are stored compressed in the APK. Play delivers only the needed pieces from the AAB. For a smaller direct-install APK, use:
+The AI recipe model is not inside either file. The size comes from the MediaPipe/Flutter AI native libraries for `arm64-v8a` and `armeabi-v7a`, the two bundled food models, and ML Kit's on-device OCR model. The `x86_64` emulator libraries and native debug symbol files are excluded. Play delivers only the needed pieces from the AAB. For a smaller direct-install APK, use:
 
 ```powershell
 flutter build apk --release --split-per-abi
@@ -206,9 +211,10 @@ All visible text belongs in `lib/strings.dart`.
 - Detection works best with good light and an open fridge door. Boxes show only the first box for each food. A careful scan can take up to two minutes on a slow device.
 - Dark, clear bottles, and some packages may be missed or labeled "Juice or Drink". Labels must be readable and in Latin script (English or French words are mapped best).
 - AI recipes are generated, not reviewed one by one. The prompt restricts ingredients and gives safety rules, but a grown-up should still check allergies and cooking steps.
-- The universal release APK is 98,774,817 bytes (94.2 MiB) because it contains MediaPipe and ML Kit native libraries for `arm64-v8a`, `armeabi-v7a`, and `x86_64`, plus the two food models. It stays under the 100 MB APK limit, but there is little room left. Use the AAB for Play (153.2 MiB) and split APKs for smaller test installs.
+- The universal release APK is 70,174,290 bytes (66.9 MiB) and the AAB is 70,875,699 bytes (67.6 MiB). They contain MediaPipe and ML Kit native libraries for `arm64-v8a` and `armeabi-v7a`, plus the two food models. `x86_64` emulator/Chromebook libraries and native debug symbol files are intentionally excluded, so use an ARM phone or tablet for release testing. The AAB is below the 90 MB target.
 - On Android 13 and newer, Android's notification-permission pop-up can briefly cover the app. The download screen now explains this before the download starts and offers **Not now**; the download only starts after that choice. The Android 12 tablet cannot show the Android 13 permission dialog, so the exact pop-up was verified through the widget tests and the permission flow, not on a physical Android 13 phone.
 - The dual-model scan, package-label reader, 521 MB download, progress notification, no-internet card, retry, live MediaPipe generation, and the new plain-text streaming cleanup were verified on a Samsung SM-T865 tablet. The 1.0.1+2 chef-brain download was re-tested end to end on that tablet: delete, download from 0% to 100%, foreground notification, ready screen, and no crash. The tablet runs Android 12, so the Android 14+ foreground-service declaration still needs a check on a newer phone. A low-end phone, TalkBack, and the system-camera path also still need a final device test.
+- `flutter build appbundle --release` stops after Gradle with a debug-symbol check because this release deliberately omits native `.sym` files. The signed AAB is already produced; build it with `cd android` and `.\gradlew.bat bundleRelease`.
 - The Ultralytics plugin still applies the Kotlin Gradle Plugin, so Flutter prints a future-compatibility warning at build time. Watch the plugin for an update.
 - The recipe set is entertainment, not medical or allergy advice. Always check ingredients for allergies.
 
