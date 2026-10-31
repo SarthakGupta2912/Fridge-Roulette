@@ -10,6 +10,8 @@ import 'services/detector_service.dart';
 import 'services/recipe_generator.dart';
 import 'strings.dart';
 import 'theme.dart';
+import 'widgets/app_sizes.dart';
+import 'widgets/custom_text.dart';
 
 /// The app starts here. We also set up safe error handling here.
 Future<void> main() async {
@@ -105,13 +107,13 @@ class FriendlyErrorWidget extends StatelessWidget {
         color: Color(0xFFFFF3E0),
         child: Center(
           child: Padding(
-            padding: EdgeInsets.all(24),
+            padding: EdgeInsets.all(AppSpacing.xxl),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Text('😵', style: TextStyle(fontSize: 56)),
-                SizedBox(height: 12),
-                Text(
+                AppEmoji('😵', size: AppSizes.emojiHero),
+                SizedBox(height: AppSpacing.md),
+                CustomText(
                   AppStrings.errorTitle,
                   textAlign: TextAlign.center,
                   style: TextStyle(
@@ -120,8 +122,8 @@ class FriendlyErrorWidget extends StatelessWidget {
                     color: Color(0xFF2D1B00),
                   ),
                 ),
-                SizedBox(height: 8),
-                Text(
+                SizedBox(height: AppSpacing.sm),
+                CustomText(
                   AppStrings.errorBody,
                   textAlign: TextAlign.center,
                   style: TextStyle(fontSize: 17, color: Color(0xFF4A3200)),

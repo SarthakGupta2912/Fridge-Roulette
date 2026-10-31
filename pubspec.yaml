@@ -1,7 +1,7 @@
 name: fridge_roulette
 description: "Snap your fridge, spin the wheel, and cook a fun recipe with what you have."
 publish_to: 'none'
-version: 1.0.1+2
+version: 1.0.2+3
 
 environment:
   sdk: ^3.12.2
@@ -24,6 +24,9 @@ dependencies:
   # Used only to ask for the download-notification permission before the
   # one-time chef-brain download starts. It is already included by flutter_edge_ai.
   background_downloader: ^9.5.9
+  # Poppins is bundled in assets/google_fonts so the app never fetches a font.
+  google_fonts: ^8.2.1
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
@@ -33,6 +36,8 @@ flutter:
   uses-material-design: true
 
   assets:
+    # Poppins is bundled so the app never downloads a font at runtime.
+    - assets/google_fonts/
     # Two small YOLO models are bundled so the app never downloads a detector:
     # - COCO nano detector (about 3 MB) for common foods like bananas and apples.
     # - FoodSeg103 nano segmenter (about 14 MB) for milk, eggs, bread, meat,
