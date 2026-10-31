@@ -8,8 +8,12 @@ import '../data/ingredients.dart';
 import '../services/chef_brain.dart';
 import '../services/recipe_generator.dart';
 import '../strings.dart';
+import '../widgets/app_card.dart';
+import '../widgets/app_page.dart';
+import '../widgets/app_sizes.dart';
 import '../widgets/big_action_button.dart';
 import '../widgets/confetti_burst.dart';
+import '../widgets/custom_text.dart';
 import '../widgets/step_indicator.dart';
 import 'recipe_screen.dart';
 
@@ -126,50 +130,43 @@ class _RouletteScreenState extends State<RouletteScreen>
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text(AppStrings.rouletteTitle)),
-      body: SafeArea(
-        child: Stack(
-          children: <Widget>[
-            SingleChildScrollView(
-              padding: const EdgeInsets.fromLTRB(20, 8, 20, 32),
-              child: Center(
-                child: ConstrainedBox(
-                  constraints: const BoxConstraints(maxWidth: 780),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: <Widget>[
-                      const StepIndicator(currentStep: 2),
-                      const SizedBox(height: 20),
-                      Text(
-                        AppStrings.rouletteSubtitle,
-                        textAlign: TextAlign.center,
-                        style: Theme.of(context).textTheme.bodyLarge,
-                      ),
-                      const SizedBox(height: 20),
-                      _buildSlotCard(context),
-                      const SizedBox(height: 20),
-                      BigActionButton(
-                        label: _spinning
-                            ? AppStrings.spinning
-                            : AppStrings.spinTheWheel,
-                        icon: Icons.casino,
-                        onPressed: _spinning ? null : _spin,
-                        busy: _spinning,
-                        semanticLabel: _spinning
-                            ? AppStrings.spinning
-                            : AppStrings.spinTheWheel,
-                      ),
-                      const SizedBox(height: 22),
-                      _buildFoodsCard(context),
-                    ],
-                  ),
+    return AppPage(
+      title: AppStrings.rouletteTitle,
+      body: Stack(
+        children: <Widget>[
+          AppScrollBody(
+            maxWidth: 780,
+            topPadding: AppSpacing.sm,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: <Widget>[
+                const StepIndicator(currentStep: 2),
+                const SizedBox(height: AppSpacing.xl),
+                CustomText.bodyLarge(
+                  AppStrings.rouletteSubtitle,
+                  textAlign: TextAlign.center,
                 ),
-              ),
+                const SizedBox(height: AppSpacing.xl),
+                _buildSlotCard(context),
+                const SizedBox(height: AppSpacing.xl),
+                BigActionButton(
+                  label: _spinning
+                      ? AppStrings.spinning
+                      : AppStrings.spinTheWheel,
+                  icon: Icons.casino,
+                  onPressed: _spinning ? null : _spin,
+                  busy: _spinning,
+                  semanticLabel: _spinning
+                      ? AppStrings.spinning
+                      : AppStrings.spinTheWheel,
+                ),
+                const SizedBox(height: AppSpacing.xl),
+                _buildFoodsCard(context),
+              ],
             ),
-            Positioned.fill(child: ConfettiBurst(animation: _confetti)),
-          ],
-        ),
+          ),
+          Positioned.fill(child: ConfettiBurst(animation: _confetti)),
+        ],
       ),
     );
   }
@@ -182,24 +179,26 @@ class _RouletteScreenState extends State<RouletteScreen>
     final String leftEmoji = _reelEmojis[(_reelIndex - 1) % length];
     final String rightEmoji = _reelEmojis[(_reelIndex + 1) % length];
 
-    return Container(
-      padding: const EdgeInsets.fromLTRB(16, 22, 16, 22),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(32),
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: <Color>[colors.primaryContainer, colors.tertiaryContainer],
-        ),
+    return AppCard(
+      radius: AppRadius.hero,
+      padding: const EdgeInsets.fromLTRB(
+        AppSpacing.lg,
+        AppSpacing.xl,
+        AppSpacing.lg,
+        AppSpacing.xl,
+      ),
+      gradient: LinearGradient(
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+        colors: <Color>[colors.primaryContainer, colors.tertiaryContainer],
       ),
       child: Column(
         children: <Widget>[
-          Text(
+          CustomText.titleMedium(
             _spinning ? AppStrings.spinningForYou : AppStrings.rouletteReady,
             textAlign: TextAlign.center,
-            style: Theme.of(context).textTheme.titleMedium,
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: AppSpacing.lg),
           Semantics(
             label: AppStrings.wheelSemantic,
             child: ExcludeSemantics(
@@ -209,20 +208,19 @@ class _RouletteScreenState extends State<RouletteScreen>
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: <Widget>[
                     _Reel(emoji: leftEmoji, size: 52, dimmed: true),
-                    const SizedBox(width: 10),
+                    const SizedBox(width: AppSpacing.sm),
                     _Reel(emoji: centerEmoji, size: 86),
-                    const SizedBox(width: 10),
+                    const SizedBox(width: AppSpacing.sm),
                     _Reel(emoji: rightEmoji, size: 52, dimmed: true),
                   ],
                 ),
               ),
             ),
           ),
-          const SizedBox(height: 16),
-          Text(
+          const SizedBox(height: AppSpacing.lg),
+          CustomText.bodyLarge(
             _spinning ? AppStrings.detectingHint : AppStrings.spinHint,
             textAlign: TextAlign.center,
-            style: Theme.of(context).textTheme.bodyLarge,
           ),
         ],
       ),
@@ -240,34 +238,24 @@ class _RouletteScreenState extends State<RouletteScreen>
       }
     }
 
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: colors.surfaceContainerHigh,
-        borderRadius: BorderRadius.circular(22),
-      ),
+    return AppCard(
+      color: colors.surfaceContainerHigh,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
-          Text(
-            AppStrings.foodsInFridge,
-            style: Theme.of(context).textTheme.titleMedium,
-          ),
-          const SizedBox(height: 10),
+          CustomText.titleMedium(AppStrings.foodsInFridge),
+          const SizedBox(height: AppSpacing.sm),
           if (foods.isEmpty)
-            Text(
-              AppStrings.noFoodsYet,
-              style: Theme.of(context).textTheme.bodyMedium,
-            )
+            CustomText.bodyMedium(AppStrings.noFoodsYet)
           else
             Wrap(
-              spacing: 8,
-              runSpacing: 8,
+              spacing: AppSpacing.sm,
+              runSpacing: AppSpacing.sm,
               children: <Widget>[
                 for (final Ingredient food in foods)
                   Chip(
-                    avatar: ExcludeSemantics(child: Text(food.emoji)),
-                    label: Text(food.name),
+                    avatar: AppEmoji(food.emoji),
+                    label: CustomText(food.name),
                   ),
               ],
             ),
@@ -300,11 +288,7 @@ class _Reel extends StatelessWidget {
               child: ScaleTransition(scale: animation, child: child),
             );
           },
-          child: Text(
-            emoji,
-            key: ValueKey<String>(emoji),
-            style: TextStyle(fontSize: size),
-          ),
+          child: AppEmoji(emoji, key: ValueKey<String>(emoji), size: size),
         ),
       ),
     );

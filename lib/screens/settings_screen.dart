@@ -4,8 +4,11 @@ import '../data/model_info.dart';
 import '../services/chef_brain.dart';
 import '../services/recipe_generator.dart';
 import '../strings.dart';
+import '../widgets/app_card.dart';
+import '../widgets/app_page.dart';
+import '../widgets/app_sizes.dart';
+import '../widgets/custom_text.dart';
 import '../widgets/friendly_dialog.dart';
-import '../widgets/layout_helper.dart';
 import 'model_download_screen.dart';
 
 /// Settings and About. The main job is showing the Chef brain status.
@@ -56,15 +59,15 @@ class _SettingsScreenState extends State<SettingsScreen> {
       await widget.generator.release();
       await widget.chefBrain.deleteModel();
       if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(const SnackBar(content: Text(AppStrings.modelDeleted)));
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: CustomText(AppStrings.modelDeleted)),
+        );
       }
     } catch (error) {
       debugPrint('Could not delete the chef brain: $error');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text(AppStrings.downloadGenericBody)),
+          const SnackBar(content: CustomText(AppStrings.downloadGenericBody)),
         );
       }
     } finally {
@@ -94,34 +97,17 @@ class _SettingsScreenState extends State<SettingsScreen> {
     return AnimatedBuilder(
       animation: widget.chefBrain,
       builder: (BuildContext context, Widget? child) {
-        return Scaffold(
-          appBar: AppBar(title: const Text(AppStrings.settingsTitle)),
-          body: SafeArea(
-            child: LayoutBuilder(
-              builder: (BuildContext context, BoxConstraints constraints) {
-                final bool wide = isWideScreen(constraints.maxWidth);
-                return SingleChildScrollView(
-                  padding: EdgeInsets.fromLTRB(
-                    wide ? 28 : 20,
-                    12,
-                    wide ? 28 : 20,
-                    32,
-                  ),
-                  child: Center(
-                    child: ConstrainedBox(
-                      constraints: const BoxConstraints(maxWidth: 760),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: <Widget>[
-                          _buildChefBrain(context),
-                          const SizedBox(height: 20),
-                          _buildAbout(context),
-                        ],
-                      ),
-                    ),
-                  ),
-                );
-              },
+        return AppPage(
+          title: AppStrings.settingsTitle,
+          body: AppScrollBody(
+            topPadding: AppSpacing.md,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: <Widget>[
+                _buildChefBrain(context),
+                const SizedBox(height: AppSpacing.xl),
+                _buildAbout(context),
+              ],
             ),
           ),
         );
@@ -136,86 +122,75 @@ class _SettingsScreenState extends State<SettingsScreen> {
     final bool downloading = status == ChefBrainStatus.downloading;
     final bool failed = status == ChefBrainStatus.failed;
 
-    return Container(
-      padding: const EdgeInsets.all(18),
-      decoration: BoxDecoration(
-        color: colors.surfaceContainerHigh,
-        borderRadius: BorderRadius.circular(24),
-      ),
+    return AppCard(
+      color: colors.surfaceContainerHigh,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: <Widget>[
           Row(
             children: <Widget>[
-              const ExcludeSemantics(
-                child: Text('🧠', style: TextStyle(fontSize: 38)),
-              ),
-              const SizedBox(width: 12),
+              const AppEmoji('🧠', size: 38),
+              const SizedBox(width: AppSpacing.md),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: <Widget>[
-                    Text(
-                      AppStrings.chefBrainTitle,
-                      style: Theme.of(context).textTheme.titleLarge,
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
+                    CustomText.titleLarge(AppStrings.chefBrainTitle),
+                    const SizedBox(height: AppSpacing.xxs),
+                    CustomText.titleMedium(
                       _statusLabel(status),
-                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        color: ready ? colors.primary : colors.onSurfaceVariant,
-                      ),
+                      color: ready ? colors.primary : colors.onSurfaceVariant,
                     ),
                   ],
                 ),
               ),
               if (ready)
-                Icon(Icons.check_circle, color: colors.primary, size: 30),
+                Icon(
+                  Icons.check_circle,
+                  color: colors.primary,
+                  size: AppSizes.iconLarge,
+                ),
             ],
           ),
-          const SizedBox(height: 12),
-          Text(
+          const SizedBox(height: AppSpacing.md),
+          CustomText.bodyMedium(
             ready
                 ? AppStrings.chefBrainReadyBody
                 : downloading
                 ? AppStrings.chefBrainDownloading
                 : AppStrings.chefBrainMissingBody,
-            style: Theme.of(context).textTheme.bodyMedium,
           ),
           if (failed && widget.chefBrain.error != null) ...<Widget>[
-            const SizedBox(height: 8),
-            Text(
+            const SizedBox(height: AppSpacing.sm),
+            CustomText.bodySmall(
               AppStrings.downloadGenericBody,
-              style: Theme.of(
-                context,
-              ).textTheme.bodySmall?.copyWith(color: colors.error),
+              color: colors.error,
             ),
           ],
           if (downloading) ...<Widget>[
-            const SizedBox(height: 14),
+            const SizedBox(height: AppSpacing.md),
             ClipRRect(
-              borderRadius: BorderRadius.circular(20),
+              borderRadius: BorderRadius.circular(AppRadius.pill),
               child: LinearProgressIndicator(
                 value: widget.chefBrain.progress / 100,
                 minHeight: 14,
               ),
             ),
           ],
-          const SizedBox(height: 14),
-          _InfoRow(label: AppStrings.modelName, value: ModelInfo.name),
-          _InfoRow(label: AppStrings.modelSize, value: ModelInfo.sizeLabel),
-          _InfoRow(
+          const SizedBox(height: AppSpacing.md),
+          AppInfoRow(label: AppStrings.modelName, value: ModelInfo.name),
+          AppInfoRow(label: AppStrings.modelSize, value: ModelInfo.sizeLabel),
+          AppInfoRow(
             label: AppStrings.modelLicense,
             value: ModelInfo.licenseName,
           ),
-          const SizedBox(height: 6),
-          SelectableText(
+          const SizedBox(height: AppSpacing.sm),
+          AppSelectableText(
             ModelInfo.licenseUrl,
-            style: Theme.of(
-              context,
-            ).textTheme.bodySmall?.copyWith(color: colors.primary),
+            variant: AppTextVariant.bodySmall,
+            color: colors.primary,
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: AppSpacing.lg),
           if (ready)
             OutlinedButton.icon(
               onPressed: _deleting ? null : _deleteModel,
@@ -226,13 +201,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       child: CircularProgressIndicator(strokeWidth: 2),
                     )
                   : const Icon(Icons.delete_outline),
-              label: const Text(AppStrings.deleteModel),
+              label: const CustomText(AppStrings.deleteModel),
             )
           else
             FilledButton.icon(
               onPressed: downloading ? _openDownload : _openDownload,
               icon: const Icon(Icons.download),
-              label: const Text(AppStrings.downloadAiChef),
+              label: const CustomText(AppStrings.downloadAiChef),
             ),
         ],
       ),
@@ -241,62 +216,20 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   Widget _buildAbout(BuildContext context) {
     final ColorScheme colors = Theme.of(context).colorScheme;
-    return Container(
-      padding: const EdgeInsets.all(18),
-      decoration: BoxDecoration(
-        color: colors.secondaryContainer,
-        borderRadius: BorderRadius.circular(24),
-      ),
+    return AppCard(
+      color: colors.secondaryContainer,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
-          Text(
-            AppStrings.aboutTitle,
-            style: Theme.of(context).textTheme.titleLarge,
-          ),
-          const SizedBox(height: 8),
-          Text(
-            AppStrings.aboutBody,
-            style: Theme.of(context).textTheme.bodyMedium,
-          ),
-          const SizedBox(height: 8),
-          Text(
-            AppStrings.privacyPromise,
-            style: Theme.of(context).textTheme.bodyMedium,
-          ),
-          const SizedBox(height: 12),
-          Text(
+          CustomText.titleLarge(AppStrings.aboutTitle),
+          const SizedBox(height: AppSpacing.sm),
+          CustomText.bodyMedium(AppStrings.aboutBody),
+          const SizedBox(height: AppSpacing.sm),
+          CustomText.bodyMedium(AppStrings.privacyPromise),
+          const SizedBox(height: AppSpacing.md),
+          CustomText.labelLarge(
             AppStrings.appVersion,
-            style: Theme.of(context).textTheme.labelLarge?.copyWith(
-              color: colors.onSecondaryContainer,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _InfoRow extends StatelessWidget {
-  const _InfoRow({required this.label, required this.value});
-
-  final String label;
-  final String value;
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 3),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: <Widget>[
-          SizedBox(
-            width: 92,
-            child: Text(label, style: Theme.of(context).textTheme.labelLarge),
-          ),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Text(value, style: Theme.of(context).textTheme.bodyMedium),
+            color: colors.onSecondaryContainer,
           ),
         ],
       ),

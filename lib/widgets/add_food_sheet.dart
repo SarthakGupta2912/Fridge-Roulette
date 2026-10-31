@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 
 import '../data/ingredients.dart';
 import '../strings.dart';
+import 'app_card.dart';
+import 'app_sizes.dart';
+import 'custom_text.dart';
 
 /// Opens the bottom sheet with big food tiles.
 /// Returns the new set of food ids, or null if the child closed it.
@@ -51,7 +54,7 @@ class _AddFoodSheetState extends State<AddFoodSheet> {
   @override
   Widget build(BuildContext context) {
     final double screenHeight = MediaQuery.sizeOf(context).height;
-    final double textScale = MediaQuery.textScalerOf(context).scale(13) / 13;
+    final double textScale = MediaQuery.textScalerOf(context).scale(14) / 14;
     final double tileHeight = 76 + 26 * textScale;
     final double screenWidth = MediaQuery.sizeOf(context).width;
     int columns = 3;
@@ -71,29 +74,33 @@ class _AddFoodSheetState extends State<AddFoodSheet> {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Padding(
-            padding: const EdgeInsets.fromLTRB(20, 4, 20, 8),
+            padding: const EdgeInsets.fromLTRB(
+              AppSpacing.xl,
+              AppSpacing.xs,
+              AppSpacing.xl,
+              AppSpacing.sm,
+            ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  AppStrings.addFoodTitle,
-                  style: Theme.of(context).textTheme.headlineSmall,
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  AppStrings.addFoodSubtitle,
-                  style: Theme.of(context).textTheme.bodyMedium,
-                ),
+                CustomText.headlineSmall(AppStrings.addFoodTitle),
+                const SizedBox(height: AppSpacing.xs),
+                CustomText.bodyMedium(AppStrings.addFoodSubtitle),
               ],
             ),
           ),
           Expanded(
             child: GridView.builder(
-              padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
+              padding: const EdgeInsets.fromLTRB(
+                AppSpacing.lg,
+                AppSpacing.sm,
+                AppSpacing.lg,
+                AppSpacing.md,
+              ),
               gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                 crossAxisCount: columns,
-                mainAxisSpacing: 10,
-                crossAxisSpacing: 10,
+                mainAxisSpacing: AppSpacing.md,
+                crossAxisSpacing: AppSpacing.md,
                 mainAxisExtent: tileHeight,
               ),
               itemCount: commonFoodIds.length,
@@ -113,11 +120,18 @@ class _AddFoodSheetState extends State<AddFoodSheet> {
           SafeArea(
             top: false,
             child: Padding(
-              padding: const EdgeInsets.fromLTRB(20, 4, 20, 16),
+              padding: const EdgeInsets.fromLTRB(
+                AppSpacing.xl,
+                AppSpacing.xs,
+                AppSpacing.xl,
+                AppSpacing.lg,
+              ),
               child: FilledButton.icon(
                 onPressed: () => Navigator.of(context).pop(_selectedIds),
                 icon: const Icon(Icons.check),
-                label: Text(AppStrings.doneWithCount(_selectedIds.length)),
+                label: CustomText(
+                  AppStrings.doneWithCount(_selectedIds.length),
+                ),
               ),
             ),
           ),
@@ -148,66 +162,51 @@ class _FoodTile extends StatelessWidget {
       label: isSelected
           ? AppStrings.addedFoodSemantic(food.name)
           : AppStrings.notAddedFoodSemantic(food.name),
-      child: Material(
+      child: AppCard(
         color: isSelected
             ? colors.primaryContainer
             : colors.surfaceContainerHigh,
-        borderRadius: BorderRadius.circular(18),
-        child: InkWell(
-          onTap: onTap,
-          borderRadius: BorderRadius.circular(18),
-          child: Container(
-            padding: const EdgeInsets.all(6),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(18),
-              border: Border.all(
-                color: isSelected ? colors.primary : colors.outlineVariant,
-                width: 2,
-              ),
-            ),
-            child: Stack(
-              children: [
-                Center(
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      ExcludeSemantics(
-                        child: SizedBox(
-                          height: 34,
-                          child: FittedBox(
-                            fit: BoxFit.scaleDown,
-                            child: Text(
-                              food.emoji,
-                              style: const TextStyle(fontSize: 30),
-                            ),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        food.name,
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                        textAlign: TextAlign.center,
-                        style: Theme.of(context).textTheme.labelMedium
-                            ?.copyWith(fontWeight: FontWeight.w700),
-                      ),
-                    ],
-                  ),
-                ),
-                if (isSelected)
-                  Positioned(
-                    top: 0,
-                    right: 0,
-                    child: Icon(
-                      Icons.check_circle,
-                      size: 20,
-                      color: colors.primary,
+        radius: AppRadius.large,
+        padding: const EdgeInsets.all(AppSpacing.sm),
+        border: Border.all(
+          color: isSelected ? colors.primary : colors.outlineVariant,
+          width: 2,
+        ),
+        onTap: onTap,
+        child: Stack(
+          children: [
+            Center(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  SizedBox(
+                    height: 34,
+                    child: FittedBox(
+                      fit: BoxFit.scaleDown,
+                      child: AppEmoji(food.emoji, size: AppSizes.emojiMedium),
                     ),
                   ),
-              ],
+                  const SizedBox(height: AppSpacing.xs),
+                  CustomText.labelMedium(
+                    food.name,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    textAlign: TextAlign.center,
+                  ),
+                ],
+              ),
             ),
-          ),
+            if (isSelected)
+              Positioned(
+                top: 0,
+                right: 0,
+                child: Icon(
+                  Icons.check_circle,
+                  size: AppSizes.iconSmall,
+                  color: colors.primary,
+                ),
+              ),
+          ],
         ),
       ),
     );

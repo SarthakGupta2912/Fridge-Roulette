@@ -8,8 +8,11 @@ import '../services/chef_brain.dart';
 import '../services/recipe_generator.dart';
 import '../services/recipe_prompt.dart';
 import '../strings.dart';
+import '../widgets/app_card.dart';
+import '../widgets/app_page.dart';
+import '../widgets/app_sizes.dart';
 import '../widgets/big_action_button.dart';
-import '../widgets/layout_helper.dart';
+import '../widgets/custom_text.dart';
 import '../widgets/step_indicator.dart';
 import 'model_download_screen.dart';
 
@@ -289,85 +292,69 @@ class _RecipeScreenState extends State<RecipeScreen>
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text(AppStrings.recipeTitle)),
-      body: SafeArea(
-        child: LayoutBuilder(
-          builder: (BuildContext context, BoxConstraints constraints) {
-            final bool wide = isWideScreen(constraints.maxWidth);
-            return SingleChildScrollView(
-              controller: _scrollController,
-              padding: EdgeInsets.fromLTRB(
-                wide ? 28 : 20,
-                8,
-                wide ? 28 : 20,
-                36,
+    return AppPage(
+      title: AppStrings.recipeTitle,
+      body: AppScrollBody(
+        controller: _scrollController,
+        maxWidth: AppSizes.maxContentWidth,
+        topPadding: AppSpacing.sm,
+        bottomPadding: 36,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: <Widget>[
+            const StepIndicator(currentStep: 2),
+            const SizedBox(height: AppSpacing.md),
+            _ChefBadge(isAi: _usingAi),
+            const SizedBox(height: AppSpacing.md),
+            _buildHero(context),
+            if (_notice != null) ...<Widget>[
+              const SizedBox(height: AppSpacing.md),
+              _NoticeCard(text: _notice!),
+            ],
+            if (_problem == 'timeout') ...<Widget>[
+              const SizedBox(height: AppSpacing.md),
+              _ProblemCard(
+                emoji: '🤔',
+                title: AppStrings.timeoutTitle,
+                body: AppStrings.timeoutBody,
               ),
-              child: Center(
-                child: ConstrainedBox(
-                  constraints: const BoxConstraints(maxWidth: 820),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: <Widget>[
-                      const StepIndicator(currentStep: 2),
-                      const SizedBox(height: 14),
-                      _ChefBadge(isAi: _usingAi),
-                      const SizedBox(height: 12),
-                      _buildHero(context),
-                      if (_notice != null) ...<Widget>[
-                        const SizedBox(height: 12),
-                        _NoticeCard(text: _notice!),
-                      ],
-                      if (_problem == 'timeout') ...<Widget>[
-                        const SizedBox(height: 12),
-                        _ProblemCard(
-                          emoji: '🤔',
-                          title: AppStrings.timeoutTitle,
-                          body: AppStrings.timeoutBody,
-                        ),
-                      ],
-                      if (_problem == 'stopped') ...<Widget>[
-                        const SizedBox(height: 12),
-                        _ProblemCard(
-                          emoji: '🛑',
-                          title: AppStrings.stoppedTitle,
-                          body: AppStrings.stoppedBody,
-                        ),
-                      ],
-                      if (_rawMode) ...<Widget>[
-                        const SizedBox(height: 12),
-                        _buildRawCard(context),
-                      ],
-                      if (_loading) ...<Widget>[
-                        const SizedBox(height: 16),
-                        _buildActions(context),
-                      ] else if (_recipe != null) ...<Widget>[
-                        const SizedBox(height: 14),
-                        _buildIngredients(context, _recipe!),
-                        const SizedBox(height: 16),
-                        _buildSteps(context, _recipe!),
-                        const SizedBox(height: 16),
-                        _buildTip(context, _recipe!),
-                        const SizedBox(height: 18),
-                        _buildActions(context),
-                      ] else if (_problem != null || _rawMode) ...<Widget>[
-                        const SizedBox(height: 16),
-                        _buildProblemActions(context),
-                      ],
-                      const SizedBox(height: 20),
-                      _buildSafetyCard(context),
-                      const SizedBox(height: 10),
-                      Text(
-                        AppStrings.pantryNote,
-                        textAlign: TextAlign.center,
-                        style: Theme.of(context).textTheme.bodySmall,
-                      ),
-                    ],
-                  ),
-                ),
+            ],
+            if (_problem == 'stopped') ...<Widget>[
+              const SizedBox(height: AppSpacing.md),
+              _ProblemCard(
+                emoji: '🛑',
+                title: AppStrings.stoppedTitle,
+                body: AppStrings.stoppedBody,
               ),
-            );
-          },
+            ],
+            if (_rawMode) ...<Widget>[
+              const SizedBox(height: AppSpacing.md),
+              _buildRawCard(context),
+            ],
+            if (_loading) ...<Widget>[
+              const SizedBox(height: AppSpacing.lg),
+              _buildActions(context),
+            ] else if (_recipe != null) ...<Widget>[
+              const SizedBox(height: AppSpacing.md),
+              _buildIngredients(context, _recipe!),
+              const SizedBox(height: AppSpacing.lg),
+              _buildSteps(context, _recipe!),
+              const SizedBox(height: AppSpacing.lg),
+              _buildTip(context, _recipe!),
+              const SizedBox(height: AppSpacing.lg),
+              _buildActions(context),
+            ] else if (_problem != null || _rawMode) ...<Widget>[
+              const SizedBox(height: AppSpacing.lg),
+              _buildProblemActions(context),
+            ],
+            const SizedBox(height: AppSpacing.xl),
+            _buildSafetyCard(context),
+            const SizedBox(height: AppSpacing.sm),
+            CustomText.bodySmall(
+              AppStrings.pantryNote,
+              textAlign: TextAlign.center,
+            ),
+          ],
         ),
       ),
     );
@@ -376,53 +363,46 @@ class _RecipeScreenState extends State<RecipeScreen>
   Widget _buildHero(BuildContext context) {
     final ColorScheme colors = Theme.of(context).colorScheme;
     final Recipe? recipe = _recipe;
-    return Container(
-      padding: const EdgeInsets.fromLTRB(18, 22, 18, 22),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(30),
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: <Color>[colors.primaryContainer, colors.tertiaryContainer],
-        ),
+    return AppCard(
+      radius: AppRadius.hero,
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.lg,
+        vertical: AppSpacing.xl,
+      ),
+      gradient: LinearGradient(
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+        colors: <Color>[colors.primaryContainer, colors.tertiaryContainer],
       ),
       child: Column(
         children: <Widget>[
           if (_loading) ...<Widget>[
             const _BobbingChef(emoji: '🧑‍🍳', size: 72),
-            const SizedBox(height: 8),
-            Text(
+            const SizedBox(height: AppSpacing.sm),
+            CustomText.headlineSmall(
               _usingAi
                   ? AppStrings.writingRecipeTitle
                   : AppStrings.quickChefWriting,
               textAlign: TextAlign.center,
-              style: Theme.of(context).textTheme.headlineSmall,
             ),
-            const SizedBox(height: 6),
-            Text(
+            const SizedBox(height: AppSpacing.sm),
+            CustomText.bodyLarge(
               AppStrings.writingRecipeBody,
               textAlign: TextAlign.center,
-              style: Theme.of(context).textTheme.bodyLarge,
             ),
             if (_plainRaw.trim().isNotEmpty) ...<Widget>[
-              const SizedBox(height: 16),
+              const SizedBox(height: AppSpacing.lg),
               _buildLiveText(context),
             ],
           ] else if (recipe != null) ...<Widget>[
-            ExcludeSemantics(
-              child: Text(recipe.emoji, style: const TextStyle(fontSize: 64)),
-            ),
-            const SizedBox(height: 6),
-            Text(
-              recipe.title,
-              textAlign: TextAlign.center,
-              style: Theme.of(context).textTheme.headlineSmall,
-            ),
-            const SizedBox(height: 14),
+            AppEmoji(recipe.emoji, size: 64),
+            const SizedBox(height: AppSpacing.sm),
+            CustomText.headlineSmall(recipe.title, textAlign: TextAlign.center),
+            const SizedBox(height: AppSpacing.md),
             Wrap(
               alignment: WrapAlignment.center,
-              spacing: 8,
-              runSpacing: 8,
+              spacing: AppSpacing.sm,
+              runSpacing: AppSpacing.sm,
               children: <Widget>[
                 _FactChip(
                   icon: Icons.schedule,
@@ -432,14 +412,11 @@ class _RecipeScreenState extends State<RecipeScreen>
               ],
             ),
           ] else ...<Widget>[
-            const ExcludeSemantics(
-              child: Text('📝', style: TextStyle(fontSize: 56)),
-            ),
-            const SizedBox(height: 8),
-            Text(
+            const AppEmoji('📝', size: 56),
+            const SizedBox(height: AppSpacing.sm),
+            CustomText.headlineSmall(
               AppStrings.rawRecipeTitle,
               textAlign: TextAlign.center,
-              style: Theme.of(context).textTheme.headlineSmall,
             ),
           ],
         ],
@@ -449,25 +426,17 @@ class _RecipeScreenState extends State<RecipeScreen>
 
   Widget _buildLiveText(BuildContext context) {
     final ColorScheme colors = Theme.of(context).colorScheme;
-    return Container(
+    return AppCard(
       width: double.infinity,
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: colors.surface.withValues(alpha: 0.8),
-        borderRadius: BorderRadius.circular(18),
-      ),
+      radius: AppRadius.large,
+      padding: const EdgeInsets.all(AppSpacing.lg),
+      color: colors.surface.withValues(alpha: 0.8),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
-          Text(
-            AppStrings.liveRecipe,
-            style: Theme.of(context).textTheme.labelLarge,
-          ),
-          const SizedBox(height: 6),
-          Text(
-            '${_plainRaw.trimLeft()} ▍',
-            style: Theme.of(context).textTheme.bodyMedium,
-          ),
+          CustomText.labelLarge(AppStrings.liveRecipe),
+          const SizedBox(height: AppSpacing.sm),
+          CustomText.bodyMedium('${_plainRaw.trimLeft()} ▍'),
         ],
       ),
     );
@@ -475,29 +444,16 @@ class _RecipeScreenState extends State<RecipeScreen>
 
   Widget _buildRawCard(BuildContext context) {
     final ColorScheme colors = Theme.of(context).colorScheme;
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: colors.surfaceContainerHigh,
-        borderRadius: BorderRadius.circular(22),
-      ),
+    return AppCard(
+      color: colors.surfaceContainerHigh,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
-          Text(
-            AppStrings.rawRecipeTitle,
-            style: Theme.of(context).textTheme.titleLarge,
-          ),
-          const SizedBox(height: 4),
-          Text(
-            AppStrings.rawRecipeBody,
-            style: Theme.of(context).textTheme.bodyMedium,
-          ),
-          const SizedBox(height: 10),
-          SelectableText(
-            _plainRaw,
-            style: Theme.of(context).textTheme.bodyMedium,
-          ),
+          CustomText.titleLarge(AppStrings.rawRecipeTitle),
+          const SizedBox(height: AppSpacing.xs),
+          CustomText.bodyMedium(AppStrings.rawRecipeBody),
+          const SizedBox(height: AppSpacing.sm),
+          AppSelectableText(_plainRaw, variant: AppTextVariant.bodyMedium),
         ],
       ),
     );
@@ -508,28 +464,21 @@ class _RecipeScreenState extends State<RecipeScreen>
     final List<String> foods = recipe.foods.isNotEmpty
         ? recipe.foods
         : _foodNames;
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: colors.surfaceContainerHigh,
-        borderRadius: BorderRadius.circular(22),
-      ),
+    return AppCard(
+      color: colors.surfaceContainerHigh,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
-          Text(
-            AppStrings.ingredientsLabel,
-            style: Theme.of(context).textTheme.titleLarge,
-          ),
-          const SizedBox(height: 10),
+          CustomText.titleLarge(AppStrings.ingredientsLabel),
+          const SizedBox(height: AppSpacing.sm),
           Wrap(
-            spacing: 8,
-            runSpacing: 8,
+            spacing: AppSpacing.sm,
+            runSpacing: AppSpacing.sm,
             children: <Widget>[
               for (final String food in foods)
                 Chip(
-                  avatar: ExcludeSemantics(child: Text(_emojiForFood(food))),
-                  label: Text(food),
+                  avatar: AppEmoji(_emojiForFood(food)),
+                  label: CustomText(food),
                 ),
             ],
           ),
@@ -542,20 +491,14 @@ class _RecipeScreenState extends State<RecipeScreen>
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: <Widget>[
-        Text(
-          AppStrings.stepsLabel,
-          style: Theme.of(context).textTheme.titleLarge,
-        ),
-        const SizedBox(height: 10),
+        CustomText.titleLarge(AppStrings.stepsLabel),
+        const SizedBox(height: AppSpacing.sm),
         if (recipe.steps.isEmpty)
-          Text(
-            AppStrings.recipeNotFound,
-            style: Theme.of(context).textTheme.bodyLarge,
-          )
+          CustomText.bodyLarge(AppStrings.recipeNotFound)
         else
           for (int index = 0; index < recipe.steps.length; index++)
             Padding(
-              padding: const EdgeInsets.only(bottom: 10),
+              padding: const EdgeInsets.only(bottom: AppSpacing.sm),
               child: _StepRow(number: index + 1, text: recipe.steps[index]),
             ),
       ],
@@ -567,29 +510,20 @@ class _RecipeScreenState extends State<RecipeScreen>
       return const SizedBox.shrink();
     }
     final ColorScheme colors = Theme.of(context).colorScheme;
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: colors.secondaryContainer,
-        borderRadius: BorderRadius.circular(22),
-      ),
+    return AppCard(
+      color: colors.secondaryContainer,
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
-          const ExcludeSemantics(
-            child: Text('💡', style: TextStyle(fontSize: 28)),
-          ),
-          const SizedBox(width: 10),
+          const AppEmoji('💡', size: AppSizes.emojiMedium),
+          const SizedBox(width: AppSpacing.sm),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: <Widget>[
-                Text(
-                  AppStrings.chefTip,
-                  style: Theme.of(context).textTheme.titleMedium,
-                ),
-                const SizedBox(height: 4),
-                Text(recipe.tip, style: Theme.of(context).textTheme.bodyLarge),
+                CustomText.titleMedium(AppStrings.chefTip),
+                const SizedBox(height: AppSpacing.xs),
+                CustomText.bodyLarge(recipe.tip),
               ],
             ),
           ),
@@ -603,7 +537,7 @@ class _RecipeScreenState extends State<RecipeScreen>
       return OutlinedButton.icon(
         onPressed: _stop,
         icon: const Icon(Icons.stop_circle_outlined),
-        label: const Text(AppStrings.stopChef),
+        label: const CustomText(AppStrings.stopChef),
       );
     }
 
@@ -616,19 +550,21 @@ class _RecipeScreenState extends State<RecipeScreen>
           icon: Icons.auto_awesome,
           onPressed: _makeAnother,
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: AppSpacing.sm),
         if (!_usingAi) ...<Widget>[
           OutlinedButton.icon(
             onPressed: aiReady ? _retryAi : _getAiChef,
             icon: Icon(aiReady ? Icons.refresh : Icons.download),
-            label: Text(aiReady ? AppStrings.tryAiAgain : AppStrings.getAiChef),
+            label: CustomText(
+              aiReady ? AppStrings.tryAiAgain : AppStrings.getAiChef,
+            ),
           ),
-          const SizedBox(height: 6),
+          const SizedBox(height: AppSpacing.xs),
         ],
         OutlinedButton.icon(
           onPressed: _changeFoods,
           icon: const Icon(Icons.photo_camera_outlined),
-          label: const Text(AppStrings.changeFoods),
+          label: const CustomText(AppStrings.changeFoods),
         ),
       ],
     );
@@ -644,24 +580,24 @@ class _RecipeScreenState extends State<RecipeScreen>
           icon: Icons.refresh,
           onPressed: _retryAi,
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: AppSpacing.sm),
         OutlinedButton.icon(
           onPressed: () => _showQuickChef(),
           icon: const Icon(Icons.soup_kitchen_outlined),
-          label: const Text(AppStrings.useQuickChefAction),
+          label: const CustomText(AppStrings.useQuickChefAction),
         ),
-        const SizedBox(height: 6),
+        const SizedBox(height: AppSpacing.xs),
         if (!aiReady)
           OutlinedButton.icon(
             onPressed: _getAiChef,
             icon: const Icon(Icons.download),
-            label: const Text(AppStrings.getAiChef),
+            label: const CustomText(AppStrings.getAiChef),
           ),
-        const SizedBox(height: 6),
+        const SizedBox(height: AppSpacing.xs),
         OutlinedButton.icon(
           onPressed: _changeFoods,
           icon: const Icon(Icons.photo_camera_outlined),
-          label: const Text(AppStrings.changeFoods),
+          label: const CustomText(AppStrings.changeFoods),
         ),
       ],
     );
@@ -669,25 +605,16 @@ class _RecipeScreenState extends State<RecipeScreen>
 
   Widget _buildSafetyCard(BuildContext context) {
     final ColorScheme colors = Theme.of(context).colorScheme;
-    return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: colors.errorContainer.withValues(alpha: 0.55),
-        borderRadius: BorderRadius.circular(18),
-      ),
+    return AppCard(
+      radius: AppRadius.large,
+      padding: const EdgeInsets.all(AppSpacing.lg),
+      color: colors.errorContainer.withValues(alpha: 0.55),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
-          const ExcludeSemantics(
-            child: Text('🦺', style: TextStyle(fontSize: 26)),
-          ),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Text(
-              AppStrings.safetyNote,
-              style: Theme.of(context).textTheme.bodyMedium,
-            ),
-          ),
+          const AppEmoji('🦺', size: AppSizes.emojiMedium),
+          const SizedBox(width: AppSpacing.sm),
+          Expanded(child: CustomText.bodyMedium(AppStrings.safetyNote)),
         ],
       ),
     );
@@ -713,26 +640,21 @@ class _ChefBadge extends StatelessWidget {
     final ColorScheme colors = Theme.of(context).colorScheme;
     return Align(
       alignment: Alignment.centerLeft,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
-        decoration: BoxDecoration(
-          color: isAi ? colors.primaryContainer : colors.secondaryContainer,
-          borderRadius: BorderRadius.circular(30),
+      child: AppCard(
+        radius: AppRadius.pill,
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.md,
+          vertical: AppSpacing.sm,
         ),
+        color: isAi ? colors.primaryContainer : colors.secondaryContainer,
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: <Widget>[
-            ExcludeSemantics(
-              child: Text(
-                isAi ? '🤖' : '⚡',
-                style: const TextStyle(fontSize: 18),
-              ),
-            ),
-            const SizedBox(width: 6),
+            AppEmoji(isAi ? '🤖' : '⚡', size: AppSizes.emojiSmall),
+            const SizedBox(width: AppSpacing.xs),
             Flexible(
-              child: Text(
+              child: CustomText.labelLarge(
                 isAi ? AppStrings.aiChef : AppStrings.quickChef,
-                style: Theme.of(context).textTheme.labelLarge,
               ),
             ),
           ],
@@ -751,18 +673,19 @@ class _FactChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final ColorScheme colors = Theme.of(context).colorScheme;
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
-      decoration: BoxDecoration(
-        color: colors.surface.withValues(alpha: 0.55),
-        borderRadius: BorderRadius.circular(30),
+    return AppCard(
+      radius: AppRadius.pill,
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.md,
+        vertical: AppSpacing.sm,
       ),
+      color: colors.surface.withValues(alpha: 0.55),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: <Widget>[
-          Icon(icon, size: 18),
-          const SizedBox(width: 6),
-          Text(text, style: Theme.of(context).textTheme.labelLarge),
+          Icon(icon, size: AppSizes.iconSmall),
+          const SizedBox(width: AppSpacing.xs),
+          CustomText.labelLarge(text),
         ],
       ),
     );
@@ -789,16 +712,13 @@ class _StepRow extends StatelessWidget {
             color: colors.primaryContainer,
             shape: BoxShape.circle,
           ),
-          child: Text(
-            '$number',
-            style: Theme.of(context).textTheme.titleMedium,
-          ),
+          child: CustomText.titleMedium('$number'),
         ),
-        const SizedBox(width: 12),
+        const SizedBox(width: AppSpacing.md),
         Expanded(
           child: Padding(
-            padding: const EdgeInsets.only(top: 5),
-            child: Text(text, style: Theme.of(context).textTheme.bodyLarge),
+            padding: const EdgeInsets.only(top: AppSpacing.xs),
+            child: CustomText.bodyLarge(text),
           ),
         ),
       ],
@@ -814,22 +734,16 @@ class _NoticeCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final ColorScheme colors = Theme.of(context).colorScheme;
-    return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: colors.tertiaryContainer,
-        borderRadius: BorderRadius.circular(18),
-      ),
+    return AppCard(
+      radius: AppRadius.large,
+      padding: const EdgeInsets.all(AppSpacing.lg),
+      color: colors.tertiaryContainer,
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
-          const ExcludeSemantics(
-            child: Text('🤖', style: TextStyle(fontSize: 24)),
-          ),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Text(text, style: Theme.of(context).textTheme.bodyMedium),
-          ),
+          const AppEmoji('🤖', size: AppSizes.emoji),
+          const SizedBox(width: AppSpacing.sm),
+          Expanded(child: CustomText.bodyMedium(text)),
         ],
       ),
     );
@@ -850,26 +764,20 @@ class _ProblemCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final ColorScheme colors = Theme.of(context).colorScheme;
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: colors.surfaceContainerHigh,
-        borderRadius: BorderRadius.circular(22),
-      ),
+    return AppCard(
+      color: colors.surfaceContainerHigh,
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
-          ExcludeSemantics(
-            child: Text(emoji, style: const TextStyle(fontSize: 30)),
-          ),
-          const SizedBox(width: 10),
+          AppEmoji(emoji, size: AppSizes.emojiMedium),
+          const SizedBox(width: AppSpacing.sm),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: <Widget>[
-                Text(title, style: Theme.of(context).textTheme.titleMedium),
-                const SizedBox(height: 4),
-                Text(body, style: Theme.of(context).textTheme.bodyMedium),
+                CustomText.titleMedium(title),
+                const SizedBox(height: AppSpacing.xs),
+                CustomText.bodyMedium(body),
               ],
             ),
           ),
@@ -898,7 +806,7 @@ class _BobbingChef extends StatelessWidget {
             child: Transform.rotate(angle: (value - 0.5) * 0.08, child: child),
           );
         },
-        child: Text(emoji, style: TextStyle(fontSize: size)),
+        child: AppEmoji(emoji, size: size),
       ),
     );
   }

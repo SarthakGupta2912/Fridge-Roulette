@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 
+import 'app_sizes.dart';
+import 'custom_text.dart';
+
 /// Shows a friendly pop-up with one or two big choices.
 /// Returns true for the main choice, false for the second choice,
 /// or null when the pop-up is closed without choosing.
@@ -15,27 +18,21 @@ Future<bool?> showFriendlyDialog(
     context: context,
     builder: (BuildContext dialogContext) {
       return AlertDialog(
-        icon: ExcludeSemantics(
-          child: Text(emoji, style: const TextStyle(fontSize: 48)),
-        ),
-        title: Text(title, textAlign: TextAlign.center),
+        icon: AppEmoji(emoji, size: AppSizes.emojiLarge),
+        title: CustomText(title, textAlign: TextAlign.center),
         content: SingleChildScrollView(
-          child: Text(
-            body,
-            textAlign: TextAlign.center,
-            style: Theme.of(dialogContext).textTheme.bodyLarge,
-          ),
+          child: CustomText.bodyLarge(body, textAlign: TextAlign.center),
         ),
         actionsAlignment: MainAxisAlignment.center,
         actions: [
           if (secondaryLabel != null)
             OutlinedButton(
               onPressed: () => Navigator.of(dialogContext).pop(false),
-              child: Text(secondaryLabel),
+              child: CustomText(secondaryLabel),
             ),
           FilledButton(
             onPressed: () => Navigator.of(dialogContext).pop(true),
-            child: Text(primaryLabel),
+            child: CustomText(primaryLabel),
           ),
         ],
       );
@@ -56,22 +53,16 @@ Future<void> showMessageDialog(
     context: context,
     builder: (BuildContext dialogContext) {
       return AlertDialog(
-        icon: ExcludeSemantics(
-          child: Text(emoji, style: const TextStyle(fontSize: 48)),
-        ),
-        title: Text(title, textAlign: TextAlign.center),
+        icon: AppEmoji(emoji, size: AppSizes.emojiLarge),
+        title: CustomText(title, textAlign: TextAlign.center),
         content: SingleChildScrollView(
-          child: Text(
-            body,
-            textAlign: TextAlign.center,
-            style: Theme.of(dialogContext).textTheme.bodyLarge,
-          ),
+          child: CustomText.bodyLarge(body, textAlign: TextAlign.center),
         ),
         actionsAlignment: MainAxisAlignment.center,
         actions: [
           FilledButton(
             onPressed: () => Navigator.of(dialogContext).pop(),
-            child: Text(buttonLabel),
+            child: CustomText(buttonLabel),
           ),
         ],
       );

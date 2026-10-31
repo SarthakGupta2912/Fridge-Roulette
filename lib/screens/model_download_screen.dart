@@ -5,9 +5,12 @@ import 'package:flutter/material.dart';
 import '../data/model_info.dart';
 import '../services/chef_brain.dart';
 import '../strings.dart';
+import '../widgets/app_card.dart';
+import '../widgets/app_page.dart';
+import '../widgets/app_sizes.dart';
 import '../widgets/big_action_button.dart';
+import '../widgets/custom_text.dart';
 import '../widgets/friendly_dialog.dart';
-import '../widgets/layout_helper.dart';
 
 /// The one-time download screen for the small AI recipe writer.
 class ModelDownloadScreen extends StatefulWidget {
@@ -195,43 +198,26 @@ class _ModelDownloadScreenState extends State<ModelDownloadScreen> {
               unawaited(_confirmLeave());
             }
           },
-          child: Scaffold(
-            appBar: AppBar(title: const Text(AppStrings.downloadTitle)),
-            body: SafeArea(
-              child: LayoutBuilder(
-                builder: (BuildContext context, BoxConstraints constraints) {
-                  final bool wide = isWideScreen(constraints.maxWidth);
-                  return SingleChildScrollView(
-                    padding: EdgeInsets.fromLTRB(
-                      wide ? 28 : 20,
-                      8,
-                      wide ? 28 : 20,
-                      32,
-                    ),
-                    child: Center(
-                      child: ConstrainedBox(
-                        constraints: const BoxConstraints(maxWidth: 760),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.stretch,
-                          children: <Widget>[
-                            _buildHero(context),
-                            const SizedBox(height: 18),
-                            _buildModelCard(context),
-                            const SizedBox(height: 14),
-                            if (status == ChefBrainStatus.ready)
-                              _buildReady(context)
-                            else if (status == ChefBrainStatus.downloading)
-                              _buildProgress(context)
-                            else if (status == ChefBrainStatus.checking)
-                              _buildChecking(context)
-                            else
-                              _buildStart(context),
-                          ],
-                        ),
-                      ),
-                    ),
-                  );
-                },
+          child: AppPage(
+            title: AppStrings.downloadTitle,
+            body: AppScrollBody(
+              topPadding: AppSpacing.sm,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: <Widget>[
+                  _buildHero(context),
+                  const SizedBox(height: AppSpacing.lg),
+                  _buildModelCard(context),
+                  const SizedBox(height: AppSpacing.md),
+                  if (status == ChefBrainStatus.ready)
+                    _buildReady(context)
+                  else if (status == ChefBrainStatus.downloading)
+                    _buildProgress(context)
+                  else if (status == ChefBrainStatus.checking)
+                    _buildChecking(context)
+                  else
+                    _buildStart(context),
+                ],
               ),
             ),
           ),
@@ -242,32 +228,26 @@ class _ModelDownloadScreenState extends State<ModelDownloadScreen> {
 
   Widget _buildHero(BuildContext context) {
     final ColorScheme colors = Theme.of(context).colorScheme;
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(28),
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: <Color>[colors.primaryContainer, colors.tertiaryContainer],
-        ),
+    return AppCard(
+      radius: AppRadius.hero,
+      padding: const EdgeInsets.all(AppSpacing.xl),
+      gradient: LinearGradient(
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+        colors: <Color>[colors.primaryContainer, colors.tertiaryContainer],
       ),
       child: Column(
         children: <Widget>[
-          const ExcludeSemantics(
-            child: Text('🧑‍🍳', style: TextStyle(fontSize: 68)),
-          ),
-          const SizedBox(height: 8),
-          Text(
+          const AppEmoji('🧑‍🍳', size: AppSizes.emojiHero),
+          const SizedBox(height: AppSpacing.sm),
+          CustomText.headlineSmall(
             AppStrings.downloadHeroTitle,
             textAlign: TextAlign.center,
-            style: Theme.of(context).textTheme.headlineSmall,
           ),
-          const SizedBox(height: 8),
-          Text(
+          const SizedBox(height: AppSpacing.sm),
+          CustomText.bodyLarge(
             AppStrings.downloadHeroBody,
             textAlign: TextAlign.center,
-            style: Theme.of(context).textTheme.bodyLarge,
           ),
         ],
       ),
@@ -276,27 +256,22 @@ class _ModelDownloadScreenState extends State<ModelDownloadScreen> {
 
   Widget _buildModelCard(BuildContext context) {
     final ColorScheme colors = Theme.of(context).colorScheme;
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: colors.surfaceContainerHigh,
-        borderRadius: BorderRadius.circular(22),
-      ),
+    return AppCard(
+      color: colors.surfaceContainerHigh,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
-          _InfoRow(label: AppStrings.modelName, value: ModelInfo.name),
-          _InfoRow(label: AppStrings.modelSize, value: ModelInfo.sizeLabel),
-          _InfoRow(
+          AppInfoRow(label: AppStrings.modelName, value: ModelInfo.name),
+          AppInfoRow(label: AppStrings.modelSize, value: ModelInfo.sizeLabel),
+          AppInfoRow(
             label: AppStrings.modelLicense,
             value: ModelInfo.licenseName,
           ),
-          const SizedBox(height: 6),
-          SelectableText(
+          const SizedBox(height: AppSpacing.sm),
+          AppSelectableText(
             ModelInfo.licenseUrl,
-            style: Theme.of(
-              context,
-            ).textTheme.bodySmall?.copyWith(color: colors.primary),
+            variant: AppTextVariant.bodySmall,
+            color: colors.primary,
           ),
         ],
       ),
@@ -316,14 +291,10 @@ class _ModelDownloadScreenState extends State<ModelDownloadScreen> {
             title: _problemTitle(problem ?? ChefBrainProblem.unknown),
             body: _problemBody(problem ?? ChefBrainProblem.unknown),
           ),
-          const SizedBox(height: 14),
+          const SizedBox(height: AppSpacing.md),
         ],
-        Container(
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: colors.secondaryContainer,
-            borderRadius: BorderRadius.circular(22),
-          ),
+        AppCard(
+          color: colors.secondaryContainer,
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: <Widget>[
@@ -331,34 +302,26 @@ class _ModelDownloadScreenState extends State<ModelDownloadScreen> {
                 Icons.sd_storage_outlined,
                 color: colors.onSecondaryContainer,
               ),
-              const SizedBox(width: 10),
+              const SizedBox(width: AppSpacing.sm),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: <Widget>[
-                    Text(
-                      AppStrings.downloadStorageTitle,
-                      style: Theme.of(context).textTheme.titleMedium,
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      AppStrings.downloadStorageBody,
-                      style: Theme.of(context).textTheme.bodyMedium,
-                    ),
+                    CustomText.titleMedium(AppStrings.downloadStorageTitle),
+                    const SizedBox(height: AppSpacing.xs),
+                    CustomText.bodyMedium(AppStrings.downloadStorageBody),
                   ],
                 ),
               ),
             ],
           ),
         ),
-        const SizedBox(height: 12),
-        Text(
+        const SizedBox(height: AppSpacing.md),
+        CustomText.bodyMedium(
           AppStrings.downloadWifiHint,
-          style: Theme.of(
-            context,
-          ).textTheme.bodyMedium?.copyWith(color: colors.onSurfaceVariant),
+          color: colors.onSurfaceVariant,
         ),
-        const SizedBox(height: 16),
+        const SizedBox(height: AppSpacing.lg),
         BigActionButton(
           label: _starting
               ? AppStrings.downloadPreparing
@@ -370,11 +333,11 @@ class _ModelDownloadScreenState extends State<ModelDownloadScreen> {
           onPressed: _starting ? null : _download,
         ),
         if (widget.canSkip) ...<Widget>[
-          const SizedBox(height: 10),
+          const SizedBox(height: AppSpacing.md),
           OutlinedButton.icon(
             onPressed: () => _leave(false),
             icon: const Icon(Icons.soup_kitchen_outlined),
-            label: const Text(AppStrings.useQuickChef),
+            label: const CustomText(AppStrings.useQuickChef),
           ),
         ],
       ],
@@ -390,12 +353,8 @@ class _ModelDownloadScreenState extends State<ModelDownloadScreen> {
     final String progressText = starting
         ? AppStrings.downloadStarting
         : AppStrings.downloadProgress(percent, doneMb, totalMb);
-    return Container(
-      padding: const EdgeInsets.all(18),
-      decoration: BoxDecoration(
-        color: colors.secondaryContainer,
-        borderRadius: BorderRadius.circular(22),
-      ),
+    return AppCard(
+      color: colors.secondaryContainer,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: <Widget>[
@@ -406,18 +365,15 @@ class _ModelDownloadScreenState extends State<ModelDownloadScreen> {
                 height: 26,
                 child: CircularProgressIndicator(strokeWidth: 3),
               ),
-              const SizedBox(width: 12),
+              const SizedBox(width: AppSpacing.md),
               Expanded(
-                child: Text(
-                  AppStrings.chefBrainDownloading,
-                  style: Theme.of(context).textTheme.titleMedium,
-                ),
+                child: CustomText.titleMedium(AppStrings.chefBrainDownloading),
               ),
             ],
           ),
-          const SizedBox(height: 14),
+          const SizedBox(height: AppSpacing.md),
           ClipRRect(
-            borderRadius: BorderRadius.circular(20),
+            borderRadius: BorderRadius.circular(AppRadius.pill),
             // While the download is being prepared we do not have a percentage
             // yet, so keep the bar moving instead of showing an empty bar.
             child: LinearProgressIndicator(
@@ -425,25 +381,23 @@ class _ModelDownloadScreenState extends State<ModelDownloadScreen> {
               minHeight: 16,
             ),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: AppSpacing.sm),
           Semantics(
             liveRegion: true,
             label: progressText,
-            child: Text(
+            child: CustomText.bodyMedium(
               progressText,
               textAlign: TextAlign.center,
-              style: Theme.of(context).textTheme.bodyMedium,
             ),
           ),
           if (starting) ...<Widget>[
-            const SizedBox(height: 3),
-            Text(
+            const SizedBox(height: AppSpacing.xs),
+            CustomText.bodySmall(
               AppStrings.downloadStartingHint,
               textAlign: TextAlign.center,
-              style: Theme.of(context).textTheme.bodySmall,
             ),
           ],
-          const SizedBox(height: 10),
+          const SizedBox(height: AppSpacing.sm),
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: <Widget>[
@@ -451,27 +405,25 @@ class _ModelDownloadScreenState extends State<ModelDownloadScreen> {
                 widget.chefBrain.usesForeground
                     ? Icons.notifications_active_outlined
                     : Icons.screen_lock_portrait_outlined,
-                size: 20,
+                size: AppSizes.iconSmall,
                 color: colors.onSecondaryContainer,
               ),
-              const SizedBox(width: 8),
+              const SizedBox(width: AppSpacing.sm),
               Expanded(
-                child: Text(
+                child: CustomText.bodySmall(
                   widget.chefBrain.usesForeground
                       ? AppStrings.downloadNotificationHint
                       : AppStrings.downloadKeepOpenHint,
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: colors.onSecondaryContainer,
-                  ),
+                  color: colors.onSecondaryContainer,
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 14),
+          const SizedBox(height: AppSpacing.md),
           OutlinedButton.icon(
             onPressed: widget.chefBrain.cancelDownload,
             icon: const Icon(Icons.close),
-            label: const Text(AppStrings.downloadCancel),
+            label: const CustomText(AppStrings.downloadCancel),
           ),
         ],
       ),
@@ -480,15 +432,14 @@ class _ModelDownloadScreenState extends State<ModelDownloadScreen> {
 
   Widget _buildChecking(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.all(24),
+      padding: const EdgeInsets.all(AppSpacing.xxl),
       child: Column(
         children: <Widget>[
           const CircularProgressIndicator(),
-          const SizedBox(height: 12),
-          Text(
+          const SizedBox(height: AppSpacing.md),
+          CustomText.bodyLarge(
             AppStrings.loadingChefBrain,
             textAlign: TextAlign.center,
-            style: Theme.of(context).textTheme.bodyLarge,
           ),
         ],
       ),
@@ -500,66 +451,31 @@ class _ModelDownloadScreenState extends State<ModelDownloadScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: <Widget>[
-        Container(
-          padding: const EdgeInsets.all(18),
-          decoration: BoxDecoration(
-            color: colors.primaryContainer,
-            borderRadius: BorderRadius.circular(22),
-          ),
+        AppCard(
+          color: colors.primaryContainer,
           child: Column(
             children: <Widget>[
-              const ExcludeSemantics(
-                child: Text('🎉', style: TextStyle(fontSize: 48)),
-              ),
-              const SizedBox(height: 8),
-              Text(
+              const AppEmoji('🎉', size: AppSizes.emojiLarge),
+              const SizedBox(height: AppSpacing.sm),
+              CustomText.titleLarge(
                 AppStrings.downloadReadyTitle,
                 textAlign: TextAlign.center,
-                style: Theme.of(context).textTheme.titleLarge,
               ),
-              const SizedBox(height: 6),
-              Text(
+              const SizedBox(height: AppSpacing.sm),
+              CustomText.bodyLarge(
                 AppStrings.downloadReadyBody,
                 textAlign: TextAlign.center,
-                style: Theme.of(context).textTheme.bodyLarge,
               ),
             ],
           ),
         ),
-        const SizedBox(height: 16),
+        const SizedBox(height: AppSpacing.lg),
         BigActionButton(
           label: AppStrings.downloadDone,
           icon: Icons.restaurant_menu,
           onPressed: () => _leave(true),
         ),
       ],
-    );
-  }
-}
-
-class _InfoRow extends StatelessWidget {
-  const _InfoRow({required this.label, required this.value});
-
-  final String label;
-  final String value;
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: <Widget>[
-          SizedBox(
-            width: 92,
-            child: Text(label, style: Theme.of(context).textTheme.labelLarge),
-          ),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Text(value, style: Theme.of(context).textTheme.bodyMedium),
-          ),
-        ],
-      ),
     );
   }
 }
@@ -573,26 +489,20 @@ class _ErrorCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final ColorScheme colors = Theme.of(context).colorScheme;
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: colors.errorContainer,
-        borderRadius: BorderRadius.circular(22),
-      ),
+    return AppCard(
+      color: colors.errorContainer,
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
-          const ExcludeSemantics(
-            child: Text('😵', style: TextStyle(fontSize: 28)),
-          ),
-          const SizedBox(width: 10),
+          const AppEmoji('😵', size: AppSizes.emojiMedium),
+          const SizedBox(width: AppSpacing.sm),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: <Widget>[
-                Text(title, style: Theme.of(context).textTheme.titleMedium),
-                const SizedBox(height: 4),
-                Text(body, style: Theme.of(context).textTheme.bodyMedium),
+                CustomText.titleMedium(title),
+                const SizedBox(height: AppSpacing.xs),
+                CustomText.bodyMedium(body),
               ],
             ),
           ),

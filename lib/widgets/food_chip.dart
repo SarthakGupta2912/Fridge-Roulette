@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 
 import '../data/ingredients.dart';
 import '../strings.dart';
+import 'app_sizes.dart';
+import 'custom_text.dart';
 
 /// A food pill. Tap it to take that food out of the list.
 class FoodChip extends StatelessWidget {
@@ -16,13 +18,11 @@ class FoodChip extends StatelessWidget {
       button: true,
       label: '${food.name}. ${AppStrings.listeningHint}',
       child: InputChip(
-        avatar: ExcludeSemantics(
-          child: Text(food.emoji, style: const TextStyle(fontSize: 22)),
-        ),
-        label: Text(food.name),
+        avatar: AppEmoji(food.emoji, size: 22),
+        label: CustomText(food.name),
         onPressed: onRemove,
         onDeleted: onRemove,
-        deleteIcon: const Icon(Icons.close, size: 20),
+        deleteIcon: const Icon(Icons.close, size: AppSizes.iconSmall),
         deleteButtonTooltipMessage: '${AppStrings.removeFood} ${food.name}',
         tooltip: AppStrings.listeningHint,
         visualDensity: VisualDensity.comfortable,

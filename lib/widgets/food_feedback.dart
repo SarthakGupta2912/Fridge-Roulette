@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 
 import '../strings.dart';
+import 'app_card.dart';
+import 'app_sizes.dart';
+import 'custom_text.dart';
 
 /// A friendly card that explains a problem and gives clear buttons.
 class FoodProblemCard extends StatelessWidget {
@@ -26,44 +29,33 @@ class FoodProblemCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final ColorScheme colors = Theme.of(context).colorScheme;
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: colors.errorContainer,
-        borderRadius: BorderRadius.circular(22),
-      ),
+    return AppCard(
+      color: colors.errorContainer,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              ExcludeSemantics(
-                child: Text(emoji, style: const TextStyle(fontSize: 30)),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Text(
-                  title,
-                  style: Theme.of(context).textTheme.titleMedium,
-                ),
-              ),
+              AppEmoji(emoji, size: AppSizes.emojiMedium),
+              const SizedBox(width: AppSpacing.sm),
+              Expanded(child: CustomText.titleMedium(title)),
             ],
           ),
-          const SizedBox(height: 8),
-          Text(body, style: Theme.of(context).textTheme.bodyMedium),
-          const SizedBox(height: 12),
+          const SizedBox(height: AppSpacing.sm),
+          CustomText.bodyMedium(body),
+          const SizedBox(height: AppSpacing.md),
           Wrap(
-            spacing: 8,
-            runSpacing: 8,
+            spacing: AppSpacing.sm,
+            runSpacing: AppSpacing.sm,
             children: [
               FilledButton.tonal(
                 onPressed: onPrimary,
-                child: Text(primaryLabel, textAlign: TextAlign.center),
+                child: CustomText(primaryLabel, textAlign: TextAlign.center),
               ),
               OutlinedButton(
                 onPressed: onSecondary,
-                child: Text(secondaryLabel, textAlign: TextAlign.center),
+                child: CustomText(secondaryLabel, textAlign: TextAlign.center),
               ),
             ],
           ),
@@ -80,26 +72,24 @@ class NoPhotoCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final ColorScheme colors = Theme.of(context).colorScheme;
-    return Container(
+    return AppCard(
       constraints: const BoxConstraints(minHeight: 230),
       width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 26),
-      decoration: BoxDecoration(
-        color: colors.surfaceContainerHigh,
-        borderRadius: BorderRadius.circular(24),
+      radius: AppRadius.image,
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.xl,
+        vertical: 26,
       ),
+      color: colors.surfaceContainerHigh,
       child: Column(
         mainAxisSize: MainAxisSize.min,
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const ExcludeSemantics(
-            child: Text('🧺', style: TextStyle(fontSize: 58)),
-          ),
-          const SizedBox(height: 12),
-          Text(
+          const AppEmoji('🧺', size: 58),
+          const SizedBox(height: AppSpacing.md),
+          CustomText.bodyLarge(
             AppStrings.noPhotoYet,
             textAlign: TextAlign.center,
-            style: Theme.of(context).textTheme.bodyLarge,
           ),
         ],
       ),
@@ -115,7 +105,7 @@ class DetectingOverlay extends StatelessWidget {
     this.progress = 0,
     this.progressLabel,
     this.onCancel,
-    this.borderRadius = 24,
+    this.borderRadius = AppRadius.image,
   });
 
   final bool waitingForModel;
@@ -150,7 +140,7 @@ class DetectingOverlay extends StatelessWidget {
                         .clamp(0.0, double.infinity)
                         .toDouble();
                     return SingleChildScrollView(
-                      padding: const EdgeInsets.all(20),
+                      padding: const EdgeInsets.all(AppSpacing.xl),
                       child: ConstrainedBox(
                         constraints: BoxConstraints(minHeight: minHeight),
                         child: Center(
@@ -164,19 +154,20 @@ class DetectingOverlay extends StatelessWidget {
                                   strokeWidth: 5,
                                 ),
                               ),
-                              const SizedBox(height: 12),
-                              Text(
+                              const SizedBox(height: AppSpacing.md),
+                              CustomText.titleLarge(
                                 waitingForModel
                                     ? AppStrings.getReady
                                     : AppStrings.lookingForFood,
                                 textAlign: TextAlign.center,
-                                style: Theme.of(context).textTheme.titleLarge
-                                    ?.copyWith(color: onScrim),
+                                color: onScrim,
                               ),
                               if (showProgress) ...[
-                                const SizedBox(height: 12),
+                                const SizedBox(height: AppSpacing.md),
                                 ClipRRect(
-                                  borderRadius: BorderRadius.circular(8),
+                                  borderRadius: BorderRadius.circular(
+                                    AppRadius.small,
+                                  ),
                                   child: LinearProgressIndicator(
                                     value: progress > 0 ? progress : null,
                                     minHeight: 9,
@@ -187,28 +178,21 @@ class DetectingOverlay extends StatelessWidget {
                                   ),
                                 ),
                                 if (progressLabel != null) ...[
-                                  const SizedBox(height: 6),
-                                  Text(
+                                  const SizedBox(height: AppSpacing.xs),
+                                  CustomText.labelLarge(
                                     progressLabel!,
                                     textAlign: TextAlign.center,
-                                    style: Theme.of(context)
-                                        .textTheme
-                                        .labelLarge
-                                        ?.copyWith(
-                                          color: onScrim,
-                                          fontWeight: FontWeight.w700,
-                                        ),
+                                    color: onScrim,
                                   ),
                                 ],
                               ],
-                              const SizedBox(height: 6),
-                              Text(
+                              const SizedBox(height: AppSpacing.xs),
+                              CustomText.bodyMedium(
                                 waitingForModel
                                     ? AppStrings.loadingBody
                                     : AppStrings.detectingHint,
                                 textAlign: TextAlign.center,
-                                style: Theme.of(context).textTheme.bodyMedium
-                                    ?.copyWith(color: onScrim),
+                                color: onScrim,
                               ),
                             ],
                           ),
@@ -221,14 +205,22 @@ class DetectingOverlay extends StatelessWidget {
               // Keep Stop reachable without scrolling, even in landscape.
               if (showProgress && onCancel != null)
                 Padding(
-                  padding: const EdgeInsets.fromLTRB(20, 0, 20, 12),
+                  padding: const EdgeInsets.fromLTRB(
+                    AppSpacing.xl,
+                    0,
+                    AppSpacing.xl,
+                    AppSpacing.md,
+                  ),
                   child: TextButton(
                     onPressed: onCancel,
                     style: TextButton.styleFrom(
                       foregroundColor: onScrim,
-                      minimumSize: const Size(56, 48),
+                      minimumSize: const Size(
+                        AppSizes.touchTarget,
+                        AppSizes.minTouchTarget,
+                      ),
                     ),
-                    child: const Text(AppStrings.stopLooking),
+                    child: const CustomText(AppStrings.stopLooking),
                   ),
                 ),
             ],

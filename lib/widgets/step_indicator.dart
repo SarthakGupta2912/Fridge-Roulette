@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 
 import '../strings.dart';
+import 'app_card.dart';
+import 'app_sizes.dart';
+import 'custom_text.dart';
 
 /// Shows the 3 steps of the app and marks the current one.
 class StepIndicator extends StatelessWidget {
@@ -89,8 +92,8 @@ class _StepDot extends StatelessWidget {
         children: [
           AnimatedContainer(
             duration: const Duration(milliseconds: 250),
-            width: 36,
-            height: 36,
+            width: AppSizes.stepDot,
+            height: AppSizes.stepDot,
             decoration: BoxDecoration(
               color: circleColor,
               shape: BoxShape.circle,
@@ -98,23 +101,19 @@ class _StepDot extends StatelessWidget {
             ),
             alignment: Alignment.center,
             child: isDone
-                ? Icon(Icons.check, size: 22, color: textColor)
-                : Text(
+                ? Icon(Icons.check, size: AppSizes.iconStep, color: textColor)
+                : CustomText.titleMedium(
                     '$number',
-                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      color: textColor,
-                      fontWeight: FontWeight.w900,
-                    ),
+                    color: textColor,
+                    fontWeight: FontWeight.w900,
                   ),
           ),
-          const SizedBox(height: 6),
-          Text(
+          const SizedBox(height: AppSpacing.xs),
+          CustomText.labelMedium(
             label,
             textAlign: TextAlign.center,
-            style: Theme.of(context).textTheme.labelMedium?.copyWith(
-              color: isCurrent ? colors.primary : colors.onSurfaceVariant,
-              fontWeight: isCurrent ? FontWeight.w900 : FontWeight.w600,
-            ),
+            color: isCurrent ? colors.primary : colors.onSurfaceVariant,
+            fontWeight: isCurrent ? FontWeight.w900 : FontWeight.w600,
           ),
         ],
       ),
@@ -129,20 +128,14 @@ class HowItWorksStrip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final ColorScheme colors = Theme.of(context).colorScheme;
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: colors.surfaceContainerHigh,
-        borderRadius: BorderRadius.circular(24),
-      ),
+    return AppCard(
+      radius: AppRadius.image,
+      color: colors.surfaceContainerHigh,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            AppStrings.howItWorks,
-            style: Theme.of(context).textTheme.titleLarge,
-          ),
-          const SizedBox(height: 14),
+          CustomText.titleLarge(AppStrings.howItWorks),
+          const SizedBox(height: AppSpacing.md),
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: const [
@@ -182,20 +175,15 @@ class _HowStep extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 2),
+      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xxs),
       child: Column(
         children: [
-          ExcludeSemantics(
-            child: Text(emoji, style: const TextStyle(fontSize: 30)),
-          ),
-          const SizedBox(height: 6),
-          Text(
+          AppEmoji(emoji, size: AppSizes.emojiMedium),
+          const SizedBox(height: AppSpacing.xs),
+          CustomText.bodySmall(
             text,
             textAlign: TextAlign.center,
-            // Small caption text keeps whole words intact at 1.5x text scale.
-            style: Theme.of(
-              context,
-            ).textTheme.bodySmall?.copyWith(fontWeight: FontWeight.w700),
+            fontWeight: FontWeight.w700,
           ),
         ],
       ),

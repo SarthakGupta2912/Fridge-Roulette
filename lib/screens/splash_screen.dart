@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 
 import '../strings.dart';
 import '../theme.dart';
+import '../widgets/app_sizes.dart';
+import '../widgets/custom_text.dart';
 
 /// A warm, simple screen shown while the food finder wakes up.
 class SplashScreen extends StatelessWidget {
@@ -22,7 +24,7 @@ class SplashScreen extends StatelessWidget {
         child: SafeArea(
           child: Center(
             child: SingleChildScrollView(
-              padding: const EdgeInsets.all(24),
+              padding: const EdgeInsets.all(AppSpacing.xxl),
               child: ConstrainedBox(
                 constraints: const BoxConstraints(maxWidth: 480),
                 child: Column(
@@ -38,27 +40,23 @@ class SplashScreen extends StatelessWidget {
                           },
                       child: const _SplashMascot(),
                     ),
-                    const SizedBox(height: 24),
-                    Text(
+                    const SizedBox(height: AppSpacing.xxl),
+                    CustomText.headlineLarge(
                       AppStrings.appName,
                       textAlign: TextAlign.center,
-                      style: Theme.of(context).textTheme.headlineLarge,
                     ),
-                    const SizedBox(height: 12),
-                    Text(
+                    const SizedBox(height: AppSpacing.md),
+                    CustomText.titleLarge(
                       AppStrings.loadingTitle,
                       textAlign: TextAlign.center,
-                      style: Theme.of(
-                        context,
-                      ).textTheme.titleLarge?.copyWith(color: colors.primary),
+                      color: colors.primary,
                     ),
-                    const SizedBox(height: 8),
-                    Text(
+                    const SizedBox(height: AppSpacing.sm),
+                    CustomText.bodyLarge(
                       AppStrings.loadingBody,
                       textAlign: TextAlign.center,
-                      style: Theme.of(context).textTheme.bodyLarge,
                     ),
-                    const SizedBox(height: 28),
+                    const SizedBox(height: AppSpacing.xxxl),
                     const SizedBox(
                       width: 44,
                       height: 44,
@@ -105,29 +103,21 @@ class _SplashMascot extends StatelessWidget {
                 ],
               ),
             ),
-            const ExcludeSemantics(
-              child: Text('🧑‍🍳', style: TextStyle(fontSize: 78)),
-            ),
+            const AppEmoji('🧑‍🍳', size: AppSizes.emojiMascot),
             const Positioned(
               left: 2,
               top: 26,
-              child: ExcludeSemantics(
-                child: Text('🍎', style: TextStyle(fontSize: 30)),
-              ),
+              child: AppEmoji('🍎', size: AppSizes.emojiMedium),
             ),
             const Positioned(
               right: 4,
               top: 54,
-              child: ExcludeSemantics(
-                child: Text('🥕', style: TextStyle(fontSize: 26)),
-              ),
+              child: AppEmoji('🥕', size: AppSizes.emojiMedium),
             ),
             const Positioned(
               right: 30,
               bottom: 4,
-              child: ExcludeSemantics(
-                child: Text('🧀', style: TextStyle(fontSize: 28)),
-              ),
+              child: AppEmoji('🧀', size: AppSizes.emojiMedium),
             ),
           ],
         ),

@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 
 import '../services/detector_service.dart';
 import '../strings.dart';
+import 'app_sizes.dart';
 
 /// Shows the fridge photo and draws a box around each food.
 class PhotoWithBoxes extends StatelessWidget {
@@ -33,12 +34,20 @@ class PhotoWithBoxes extends StatelessWidget {
           width = height * aspectRatio;
         }
         final ColorScheme colors = Theme.of(context).colorScheme;
+        final TextScaler scaler = MediaQuery.textScalerOf(context);
+        final TextStyle baseLabel =
+            Theme.of(context).textTheme.labelSmall ?? const TextStyle();
+        final TextStyle labelStyle = baseLabel.copyWith(
+          color: colors.onPrimary,
+          fontSize: scaler.scale(baseLabel.fontSize ?? 12),
+          fontWeight: FontWeight.w800,
+        );
         return Center(
           child: Semantics(
             image: true,
             label: AppStrings.photoSemantic,
             child: ClipRRect(
-              borderRadius: BorderRadius.circular(24),
+              borderRadius: BorderRadius.circular(AppRadius.image),
               child: SizedBox(
                 width: width,
                 height: height,
@@ -62,7 +71,7 @@ class PhotoWithBoxes extends StatelessWidget {
                               child: const Center(
                                 child: Icon(
                                   Icons.broken_image_outlined,
-                                  size: 54,
+                                  size: AppSizes.iconHero,
                                 ),
                               ),
                             );
@@ -73,7 +82,7 @@ class PhotoWithBoxes extends StatelessWidget {
                         detections: detections,
                         activeFoodIds: activeFoodIds,
                         boxColor: colors.primary,
-                        labelTextColor: colors.onPrimary,
+                        labelStyle: labelStyle,
                       ),
                     ),
                   ],
@@ -93,13 +102,13 @@ class FoodBoxPainter extends CustomPainter {
     required this.detections,
     required this.activeFoodIds,
     required this.boxColor,
-    required this.labelTextColor,
+    required this.labelStyle,
   });
 
   final List<FoodDetection> detections;
   final Set<String> activeFoodIds;
   final Color boxColor;
-  final Color labelTextColor;
+  final TextStyle labelStyle;
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -124,7 +133,7 @@ class FoodBoxPainter extends CustomPainter {
         continue;
       }
       canvas.drawRRect(
-        RRect.fromRectAndRadius(rect, const Radius.circular(10)),
+        RRect.fromRectAndRadius(rect, const Radius.circular(AppRadius.small)),
         boxPaint,
       );
       _drawLabel(canvas, size, rect, detection);
@@ -135,11 +144,7 @@ class FoodBoxPainter extends CustomPainter {
     final TextPainter textPainter = TextPainter(
       text: TextSpan(
         text: '${detection.food.emoji} ${detection.food.name}',
-        style: TextStyle(
-          color: labelTextColor,
-          fontSize: 13,
-          fontWeight: FontWeight.w800,
-        ),
+        style: labelStyle,
       ),
       maxLines: 1,
       ellipsis: '…',
@@ -169,7 +174,10 @@ class FoodBoxPainter extends CustomPainter {
       labelHeight,
     );
     canvas.drawRRect(
-      RRect.fromRectAndRadius(labelRect, const Radius.circular(8)),
+      RRect.fromRectAndRadius(
+        labelRect,
+        const Radius.circular(AppRadius.small),
+      ),
       Paint()..color = boxColor,
     );
     textPainter.paint(
@@ -182,6 +190,7 @@ class FoodBoxPainter extends CustomPainter {
   bool shouldRepaint(covariant FoodBoxPainter oldDelegate) {
     return oldDelegate.detections != detections ||
         oldDelegate.activeFoodIds != activeFoodIds ||
-        oldDelegate.boxColor != boxColor;
+        oldDelegate.boxColor != boxColor ||
+        oldDelegate.labelStyle != labelStyle;
   }
 }

@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 
+import 'app_sizes.dart';
+import 'custom_text.dart';
+
 /// The one big button a child can see from far away.
 class BigActionButton extends StatelessWidget {
   const BigActionButton({
@@ -38,9 +41,9 @@ class BigActionButton extends StatelessWidget {
                   child: CircularProgressIndicator(strokeWidth: 3),
                 )
               else
-                Icon(icon, size: 30),
-              const SizedBox(width: 10),
-              Flexible(child: Text(label, textAlign: TextAlign.center)),
+                Icon(icon, size: AppSizes.iconLarge),
+              const SizedBox(width: AppSpacing.sm),
+              Flexible(child: CustomText(label, textAlign: TextAlign.center)),
             ],
           ),
         ),

@@ -10,7 +10,11 @@ import '../services/detector_service.dart';
 import '../services/recipe_generator.dart';
 import '../strings.dart';
 import '../widgets/add_food_sheet.dart';
+import '../widgets/app_card.dart';
+import '../widgets/app_page.dart';
+import '../widgets/app_sizes.dart';
 import '../widgets/big_action_button.dart';
+import '../widgets/custom_text.dart';
 import '../widgets/food_chip.dart';
 import '../widgets/food_feedback.dart';
 import '../widgets/friendly_dialog.dart';
@@ -285,93 +289,88 @@ class _CheckFoodScreenState extends State<CheckFoodScreen> {
         }
         _confirmLeave();
       },
-      child: Scaffold(
-        appBar: AppBar(title: const Text(AppStrings.checkTitle)),
-        body: SafeArea(
-          child: Stack(
-            children: [
-              LayoutBuilder(
-                builder: (BuildContext context, BoxConstraints constraints) {
-                  if (isWideScreen(constraints.maxWidth)) {
-                    return _buildWide(context);
-                  }
-                  return _buildNarrow(context);
-                },
-              ),
-              // A long scan covers the whole page, not just the photo. This
-              // keeps the progress bar and Stop button easy to reach even when
-              // the photo is a wide panorama.
-              if (_detecting)
-                Positioned.fill(
-                  child: ListenableBuilder(
-                    listenable: widget.detector,
-                    builder: (BuildContext context, Widget? child) {
-                      final ScanProgress progress =
-                          widget.detector.scanProgress.value;
-                      return DetectingOverlay(
-                        waitingForModel:
-                            widget.detector.status == DetectorStatus.loading,
-                        progress: progress.fraction,
-                        progressLabel: progress.total <= 0
-                            ? null
-                            : AppStrings.scanningStep(
-                                progress.done,
-                                progress.total,
-                              ),
-                        onCancel: _stopScan,
-                        borderRadius: 0,
-                      );
-                    },
-                  ),
+      child: AppPage(
+        title: AppStrings.checkTitle,
+        body: Stack(
+          children: [
+            LayoutBuilder(
+              builder: (BuildContext context, BoxConstraints constraints) {
+                if (isWideScreen(constraints.maxWidth)) {
+                  return _buildWide(context);
+                }
+                return _buildNarrow(context);
+              },
+            ),
+            // A long scan covers the whole page, not just the photo. This
+            // keeps the progress bar and Stop button easy to reach even when
+            // the photo is a wide panorama.
+            if (_detecting)
+              Positioned.fill(
+                child: ListenableBuilder(
+                  listenable: widget.detector,
+                  builder: (BuildContext context, Widget? child) {
+                    final ScanProgress progress =
+                        widget.detector.scanProgress.value;
+                    return DetectingOverlay(
+                      waitingForModel:
+                          widget.detector.status == DetectorStatus.loading,
+                      progress: progress.fraction,
+                      progressLabel: progress.total <= 0
+                          ? null
+                          : AppStrings.scanningStep(
+                              progress.done,
+                              progress.total,
+                            ),
+                      onCancel: _stopScan,
+                      borderRadius: 0,
+                    );
+                  },
                 ),
-            ],
-          ),
+              ),
+          ],
         ),
       ),
     );
   }
 
   Widget _buildNarrow(BuildContext context) {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.fromLTRB(20, 8, 20, 32),
-      child: Center(
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 760),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              const StepIndicator(currentStep: 1),
-              const SizedBox(height: 18),
-              Text(
-                AppStrings.checkSubtitle,
-                style: Theme.of(context).textTheme.bodyLarge,
-              ),
-              const SizedBox(height: 16),
-              _buildPhoto(context),
-              if (_problem != _ScanProblem.none) ...[
-                const SizedBox(height: 16),
-                _buildProblemCard(),
-              ],
-              const SizedBox(height: 22),
-              _buildFoodList(context),
-              const SizedBox(height: 14),
-              _buildAddButton(),
-              const SizedBox(height: 22),
-              _buildSpinArea(),
-            ],
-          ),
-        ),
+    return AppScrollBody(
+      topPadding: AppSpacing.sm,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          const StepIndicator(currentStep: 1),
+          const SizedBox(height: AppSpacing.lg),
+          CustomText.bodyLarge(AppStrings.checkSubtitle),
+          const SizedBox(height: AppSpacing.lg),
+          _buildPhoto(context),
+          if (_problem != _ScanProblem.none) ...[
+            const SizedBox(height: AppSpacing.lg),
+            _buildProblemCard(),
+          ],
+          const SizedBox(height: AppSpacing.xl),
+          _buildFoodList(context),
+          const SizedBox(height: AppSpacing.md),
+          _buildAddButton(),
+          const SizedBox(height: AppSpacing.xl),
+          _buildSpinArea(),
+        ],
       ),
     );
   }
 
   Widget _buildWide(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(28, 8, 28, 24),
+      padding: const EdgeInsets.fromLTRB(
+        AppSpacing.xxl,
+        AppSpacing.sm,
+        AppSpacing.xxl,
+        AppSpacing.xxl,
+      ),
       child: Column(
         children: [
           const StepIndicator(currentStep: 1),
-          const SizedBox(height: 16),
+          const SizedBox(height: AppSpacing.lg),
           Expanded(
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -380,26 +379,23 @@ class _CheckFoodScreenState extends State<CheckFoodScreen> {
                   flex: 6,
                   child: SingleChildScrollView(child: _buildPhoto(context)),
                 ),
-                const SizedBox(width: 28),
+                const SizedBox(width: AppSpacing.xxl),
                 Expanded(
                   flex: 5,
                   child: SingleChildScrollView(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        Text(
-                          AppStrings.checkSubtitle,
-                          style: Theme.of(context).textTheme.bodyLarge,
-                        ),
+                        CustomText.bodyLarge(AppStrings.checkSubtitle),
                         if (_problem != _ScanProblem.none) ...[
-                          const SizedBox(height: 14),
+                          const SizedBox(height: AppSpacing.md),
                           _buildProblemCard(),
                         ],
-                        const SizedBox(height: 18),
+                        const SizedBox(height: AppSpacing.lg),
                         _buildFoodList(context),
-                        const SizedBox(height: 14),
+                        const SizedBox(height: AppSpacing.md),
                         _buildAddButton(),
-                        const SizedBox(height: 24),
+                        const SizedBox(height: AppSpacing.xxl),
                         _buildSpinArea(),
                       ],
                     ),
@@ -506,36 +502,26 @@ class _CheckFoodScreenState extends State<CheckFoodScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Text(
-          AppStrings.yourFoods,
-          style: Theme.of(context).textTheme.titleLarge,
-        ),
+        CustomText.titleLarge(AppStrings.yourFoods),
         if (foods.isNotEmpty) ...[
-          const SizedBox(height: 2),
-          Text(
+          const SizedBox(height: AppSpacing.xxs),
+          CustomText.labelLarge(
             AppStrings.foodCount(foods.length),
-            style: Theme.of(
-              context,
-            ).textTheme.labelLarge?.copyWith(color: colors.primary),
+            color: colors.primary,
           ),
         ],
-        const SizedBox(height: 10),
+        const SizedBox(height: AppSpacing.sm),
         if (foods.isEmpty)
-          Container(
-            padding: const EdgeInsets.all(14),
-            decoration: BoxDecoration(
-              color: colors.surfaceContainerHigh,
-              borderRadius: BorderRadius.circular(18),
-            ),
-            child: Text(
-              AppStrings.noFoodsYet,
-              style: Theme.of(context).textTheme.bodyLarge,
-            ),
+          AppCard(
+            radius: AppRadius.large,
+            padding: const EdgeInsets.all(AppSpacing.lg),
+            color: colors.surfaceContainerHigh,
+            child: CustomText.bodyLarge(AppStrings.noFoodsYet),
           )
         else
           Wrap(
-            spacing: 8,
-            runSpacing: 8,
+            spacing: AppSpacing.sm,
+            runSpacing: AppSpacing.sm,
             children: [
               for (final Ingredient food in foods)
                 FoodChip(
@@ -554,7 +540,7 @@ class _CheckFoodScreenState extends State<CheckFoodScreen> {
       width: double.infinity,
       child: OutlinedButton(
         onPressed: _detecting ? null : _openFoodSheet,
-        child: const Text(AppStrings.addFood),
+        child: const CustomText(AppStrings.addFood),
       ),
     );
   }
@@ -571,21 +557,19 @@ class _CheckFoodScreenState extends State<CheckFoodScreen> {
             children: [
               Icon(
                 Icons.info_outline,
-                size: 20,
+                size: AppSizes.iconSmall,
                 color: colors.onSurfaceVariant,
               ),
-              const SizedBox(width: 8),
+              const SizedBox(width: AppSpacing.sm),
               Expanded(
-                child: Text(
+                child: CustomText.bodyMedium(
                   AppStrings.notEnoughHint,
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: colors.onSurfaceVariant,
-                  ),
+                  color: colors.onSurfaceVariant,
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: AppSpacing.sm),
         ],
         BigActionButton(
           label: AppStrings.spinTheWheel,

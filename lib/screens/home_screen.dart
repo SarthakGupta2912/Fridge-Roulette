@@ -8,7 +8,11 @@ import '../services/chef_brain.dart';
 import '../services/detector_service.dart';
 import '../services/recipe_generator.dart';
 import '../strings.dart';
+import '../widgets/app_card.dart';
+import '../widgets/app_page.dart';
+import '../widgets/app_sizes.dart';
 import '../widgets/big_action_button.dart';
+import '../widgets/custom_text.dart';
 import '../widgets/friendly_dialog.dart';
 import '../widgets/layout_helper.dart';
 import '../widgets/step_indicator.dart';
@@ -259,7 +263,7 @@ class _HomeScreenState extends State<HomeScreen> {
   void _showSnackBar(String message) {
     ScaffoldMessenger.of(
       context,
-    ).showSnackBar(SnackBar(content: Text(message)));
+    ).showSnackBar(SnackBar(content: CustomText(message)));
   }
 
   @override
@@ -288,50 +292,46 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildNarrow(BuildContext context) {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.fromLTRB(24, 24, 24, 32),
-      child: Center(
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 720),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              _TopBar(onSettings: _openSettings),
-              const SizedBox(height: 4),
-              _MascotHeader(centered: true),
-              const SizedBox(height: 20),
-              _ModelBanner(
-                detector: widget.detector,
-                onRetry: widget.detector.loadModel,
-                onManual: _openManualFoods,
-              ),
-              const SizedBox(height: 16),
-              _ChefBrainBanner(
-                chefBrain: widget.chefBrain,
-                onTap: _handleChefBrainTap,
-              ),
-              const SizedBox(height: 16),
-              _ActionButtons(
-                busy: _busy,
-                status: widget.detector.status,
-                onCamera: _takePhoto,
-                onGallery: _pickFromGallery,
-              ),
-              const SizedBox(height: 24),
-              const HowItWorksStrip(),
-              const SizedBox(height: 18),
-              const _OfflineBadge(),
-              const SizedBox(height: 14),
-              Text(
-                AppStrings.homeHint,
-                textAlign: TextAlign.center,
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: Theme.of(context).colorScheme.onSurfaceVariant,
-                ),
-              ),
-            ],
+    final ColorScheme colors = Theme.of(context).colorScheme;
+    return AppScrollBody(
+      maxWidth: 720,
+      horizontalPadding: AppSpacing.xxl,
+      topPadding: AppSpacing.xxl,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          _TopBar(onSettings: _openSettings),
+          const SizedBox(height: AppSpacing.xs),
+          const _MascotHeader(centered: true),
+          const SizedBox(height: AppSpacing.xl),
+          _ModelBanner(
+            detector: widget.detector,
+            onRetry: widget.detector.loadModel,
+            onManual: _openManualFoods,
           ),
-        ),
+          const SizedBox(height: AppSpacing.lg),
+          _ChefBrainBanner(
+            chefBrain: widget.chefBrain,
+            onTap: _handleChefBrainTap,
+          ),
+          const SizedBox(height: AppSpacing.lg),
+          _ActionButtons(
+            busy: _busy,
+            status: widget.detector.status,
+            onCamera: _takePhoto,
+            onGallery: _pickFromGallery,
+          ),
+          const SizedBox(height: AppSpacing.xxl),
+          const HowItWorksStrip(),
+          const SizedBox(height: AppSpacing.lg),
+          const _OfflineBadge(),
+          const SizedBox(height: AppSpacing.md),
+          CustomText.bodyMedium(
+            AppStrings.homeHint,
+            textAlign: TextAlign.center,
+            color: colors.onSurfaceVariant,
+          ),
+        ],
       ),
     );
   }
@@ -342,7 +342,12 @@ class _HomeScreenState extends State<HomeScreen> {
       children: [
         Expanded(
           child: SingleChildScrollView(
-            padding: const EdgeInsets.fromLTRB(32, 24, 20, 32),
+            padding: const EdgeInsets.fromLTRB(
+              AppSpacing.xxxl,
+              AppSpacing.xxl,
+              AppSpacing.xl,
+              AppSpacing.xxxl,
+            ),
             child: Center(
               child: ConstrainedBox(
                 constraints: const BoxConstraints(maxWidth: 460),
@@ -353,7 +358,12 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
         Expanded(
           child: SingleChildScrollView(
-            padding: const EdgeInsets.fromLTRB(20, 24, 32, 32),
+            padding: const EdgeInsets.fromLTRB(
+              AppSpacing.xl,
+              AppSpacing.xxl,
+              AppSpacing.xxxl,
+              AppSpacing.xxxl,
+            ),
             child: Center(
               child: ConstrainedBox(
                 constraints: const BoxConstraints(maxWidth: 520),
@@ -361,27 +371,27 @@ class _HomeScreenState extends State<HomeScreen> {
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     _TopBar(onSettings: _openSettings),
-                    const SizedBox(height: 4),
+                    const SizedBox(height: AppSpacing.xs),
                     _ModelBanner(
                       detector: widget.detector,
                       onRetry: widget.detector.loadModel,
                       onManual: _openManualFoods,
                     ),
-                    const SizedBox(height: 16),
+                    const SizedBox(height: AppSpacing.lg),
                     _ChefBrainBanner(
                       chefBrain: widget.chefBrain,
                       onTap: _handleChefBrainTap,
                     ),
-                    const SizedBox(height: 16),
+                    const SizedBox(height: AppSpacing.lg),
                     _ActionButtons(
                       busy: _busy,
                       status: widget.detector.status,
                       onCamera: _takePhoto,
                       onGallery: _pickFromGallery,
                     ),
-                    const SizedBox(height: 24),
+                    const SizedBox(height: AppSpacing.xxl),
                     const HowItWorksStrip(),
-                    const SizedBox(height: 18),
+                    const SizedBox(height: AppSpacing.lg),
                     const _OfflineBadge(),
                   ],
                 ),
@@ -406,12 +416,12 @@ class _TopBar extends StatelessWidget {
       mainAxisAlignment: MainAxisAlignment.end,
       children: <Widget>[
         SizedBox(
-          width: 56,
-          height: 56,
+          width: AppSizes.touchTarget,
+          height: AppSizes.touchTarget,
           child: IconButton.filledTonal(
             onPressed: onSettings,
             tooltip: AppStrings.settings,
-            icon: const Icon(Icons.settings_outlined, size: 28),
+            icon: const Icon(Icons.settings_outlined, size: AppSizes.iconLarge),
           ),
         ),
       ],
@@ -450,61 +460,49 @@ class _ChefBrainBanner extends StatelessWidget {
     return Semantics(
       button: true,
       label: title,
-      child: Material(
+      child: AppCard(
         color: background,
-        borderRadius: BorderRadius.circular(22),
-        child: InkWell(
-          onTap: onTap,
-          borderRadius: BorderRadius.circular(22),
-          child: Padding(
-            padding: const EdgeInsets.all(14),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
+        padding: const EdgeInsets.all(AppSpacing.lg),
+        onTap: onTap,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: <Widget>[
+            Row(
               children: <Widget>[
-                Row(
-                  children: <Widget>[
-                    const ExcludeSemantics(
-                      child: Text('🧠', style: TextStyle(fontSize: 30)),
-                    ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: <Widget>[
-                          Text(
-                            title,
-                            style: Theme.of(context).textTheme.titleMedium,
-                          ),
-                          const SizedBox(height: 2),
-                          Text(
-                            ready
-                                ? AppStrings.chefBrainReadyBody
-                                : AppStrings.chefBrainMissingBody,
-                            style: Theme.of(context).textTheme.bodySmall,
-                          ),
-                        ],
+                const AppEmoji('🧠', size: AppSizes.emojiMedium),
+                const SizedBox(width: AppSpacing.sm),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: <Widget>[
+                      CustomText.titleMedium(title),
+                      const SizedBox(height: AppSpacing.xxs),
+                      CustomText.bodySmall(
+                        ready
+                            ? AppStrings.chefBrainReadyBody
+                            : AppStrings.chefBrainMissingBody,
                       ),
-                    ),
-                    const SizedBox(width: 8),
-                    Icon(
-                      ready ? Icons.check_circle : Icons.download,
-                      color: colors.onSecondaryContainer,
-                    ),
-                  ],
-                ),
-                if (downloading) ...<Widget>[
-                  const SizedBox(height: 10),
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(20),
-                    child: LinearProgressIndicator(
-                      value: chefBrain.progress / 100,
-                      minHeight: 10,
-                    ),
+                    ],
                   ),
-                ],
+                ),
+                const SizedBox(width: AppSpacing.sm),
+                Icon(
+                  ready ? Icons.check_circle : Icons.download,
+                  color: colors.onSecondaryContainer,
+                ),
               ],
             ),
-          ),
+            if (downloading) ...<Widget>[
+              const SizedBox(height: AppSpacing.sm),
+              ClipRRect(
+                borderRadius: BorderRadius.circular(AppRadius.pill),
+                child: LinearProgressIndicator(
+                  value: chefBrain.progress / 100,
+                  minHeight: 10,
+                ),
+              ),
+            ],
+          ],
         ),
       ),
     );
@@ -541,53 +539,41 @@ class _MascotHeader extends StatelessWidget {
                     shape: BoxShape.circle,
                   ),
                 ),
-                const ExcludeSemantics(
-                  child: Text('🧑‍🍳', style: TextStyle(fontSize: 74)),
-                ),
+                const AppEmoji('🧑‍🍳', size: AppSizes.emojiMascot),
                 const Positioned(
                   left: 2,
                   top: 20,
-                  child: ExcludeSemantics(
-                    child: Text('🍎', style: TextStyle(fontSize: 28)),
-                  ),
+                  child: AppEmoji('🍎', size: AppSizes.emojiMedium),
                 ),
                 const Positioned(
                   right: 6,
                   top: 46,
-                  child: ExcludeSemantics(
-                    child: Text('🥦', style: TextStyle(fontSize: 24)),
-                  ),
+                  child: AppEmoji('🥦', size: AppSizes.emoji),
                 ),
                 const Positioned(
                   right: 26,
                   bottom: 2,
-                  child: ExcludeSemantics(
-                    child: Text('🧀', style: TextStyle(fontSize: 26)),
-                  ),
+                  child: AppEmoji('🧀', size: AppSizes.emojiMedium),
                 ),
               ],
             ),
           ),
         ),
-        const SizedBox(height: 12),
-        Text(
+        const SizedBox(height: AppSpacing.md),
+        CustomText.headlineLarge(
           AppStrings.appName,
           textAlign: centered ? TextAlign.center : TextAlign.start,
-          style: Theme.of(
-            context,
-          ).textTheme.headlineLarge?.copyWith(color: colors.primary),
+          color: colors.primary,
         ),
-        const SizedBox(height: 10),
-        Text(
+        const SizedBox(height: AppSpacing.sm),
+        CustomText.headlineSmall(
           AppStrings.homeTitle,
           textAlign: centered ? TextAlign.center : TextAlign.start,
-          style: Theme.of(context).textTheme.headlineSmall,
         ),
-        const SizedBox(height: 8),
-        Text(
+        const SizedBox(height: AppSpacing.sm),
+        CustomText.bodyLarge(
           AppStrings.homeSubtitle,
           textAlign: centered ? TextAlign.center : TextAlign.start,
-          style: Theme.of(context).textTheme.bodyLarge,
         ),
       ],
     );
@@ -613,12 +599,8 @@ class _ModelBanner extends StatelessWidget {
     }
     final bool loading = detector.status == DetectorStatus.loading;
     final ColorScheme colors = Theme.of(context).colorScheme;
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: loading ? colors.secondaryContainer : colors.errorContainer,
-        borderRadius: BorderRadius.circular(22),
-      ),
+    return AppCard(
+      color: loading ? colors.secondaryContainer : colors.errorContainer,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -626,45 +608,41 @@ class _ModelBanner extends StatelessWidget {
             children: [
               if (loading)
                 const SizedBox(
-                  width: 24,
-                  height: 24,
+                  width: AppSizes.icon,
+                  height: AppSizes.icon,
                   child: CircularProgressIndicator(strokeWidth: 3),
                 )
               else
-                const ExcludeSemantics(
-                  child: Text('😴', style: TextStyle(fontSize: 28)),
-                ),
-              const SizedBox(width: 12),
+                const AppEmoji('😴', size: AppSizes.emojiMedium),
+              const SizedBox(width: AppSpacing.md),
               Expanded(
-                child: Text(
+                child: CustomText.titleMedium(
                   loading
                       ? AppStrings.loadingTitle
                       : AppStrings.modelFailedTitle,
-                  style: Theme.of(context).textTheme.titleMedium,
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 8),
-          Text(
+          const SizedBox(height: AppSpacing.sm),
+          CustomText.bodyMedium(
             loading ? AppStrings.loadingBody : AppStrings.modelFailedBody,
-            style: Theme.of(context).textTheme.bodyMedium,
           ),
           if (!loading) ...[
-            const SizedBox(height: 12),
+            const SizedBox(height: AppSpacing.md),
             Wrap(
-              spacing: 8,
-              runSpacing: 8,
+              spacing: AppSpacing.sm,
+              runSpacing: AppSpacing.sm,
               children: [
                 FilledButton.tonalIcon(
                   onPressed: onRetry,
                   icon: const Icon(Icons.refresh),
-                  label: const Text(AppStrings.retry),
+                  label: const CustomText(AppStrings.retry),
                 ),
                 OutlinedButton.icon(
                   onPressed: onManual,
                   icon: const Icon(Icons.edit_outlined),
-                  label: const Text(AppStrings.useHands),
+                  label: const CustomText(AppStrings.useHands),
                 ),
               ],
             ),
@@ -702,7 +680,7 @@ class _ActionButtons extends StatelessWidget {
           busy: busy,
           semanticLabel: AppStrings.takePhoto,
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: AppSpacing.md),
         Semantics(
           button: true,
           enabled: !busy && !loading,
@@ -710,7 +688,7 @@ class _ActionButtons extends StatelessWidget {
           child: OutlinedButton.icon(
             onPressed: busy || loading ? null : onGallery,
             icon: const Icon(Icons.photo_library_outlined),
-            label: const Text(AppStrings.pickGallery),
+            label: const CustomText(AppStrings.pickGallery),
           ),
         ),
       ],
@@ -728,15 +706,17 @@ class _OfflineBadge extends StatelessWidget {
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        Icon(Icons.download_done, size: 20, color: colors.onSurfaceVariant),
-        const SizedBox(width: 8),
+        Icon(
+          Icons.download_done,
+          size: AppSizes.iconSmall,
+          color: colors.onSurfaceVariant,
+        ),
+        const SizedBox(width: AppSpacing.sm),
         Flexible(
-          child: Text(
+          child: CustomText.bodyMedium(
             AppStrings.offlineBadge,
             textAlign: TextAlign.center,
-            style: Theme.of(
-              context,
-            ).textTheme.bodyMedium?.copyWith(color: colors.onSurfaceVariant),
+            color: colors.onSurfaceVariant,
           ),
         ),
       ],
