@@ -63,6 +63,8 @@ The parser is lenient. If the model invents an ingredient that is not in the fri
 - Safety-first prompt and a grown-up safety card on every recipe.
 - Friendly download screen with percent, MB, free-space warning, Wi-Fi hint, cancel, a foreground progress notification, and retry-friendly errors for no internet, busy server, interruption, damage, low storage, or closing the app.
 - Material 3 light and dark themes that follow the system.
+- Poppins everywhere through `google_fonts`, bundled in the APK/AAB so the app never downloads a font at runtime.
+- One shared `CustomText` widget reads the child's text size from `MediaQuery`, so phones and tablets keep the same calm type scale.
 - Responsive phone, tablet, portrait, and landscape layouts.
 - Text scaling up to at least 1.5x, 56 dp minimum tap targets, and screen-reader labels.
 - Friendly handling for camera/gallery failures, lost photos, model load failure, detection timeout, no food found, fewer than 2 foods, double taps, rotation, leaving the check screen, AI timeout, and AI parse failure.
@@ -74,7 +76,8 @@ The parser is lenient. If the model invents an ingredient that is not in the fri
 | Part | Choice |
 | --- | --- |
 | Framework | Flutter 3.44.6 / Dart 3.12.2 |
-| UI | Material 3, plain `StatefulWidget` + `setState` |
+| UI | Material 3, plain `StatefulWidget` + `setState`, shared `CustomText` / `AppCard` / `AppPage` widgets |
+| Font | Poppins via `google_fonts`, bundled locally (runtime fetching disabled) |
 | Detection | [`ultralytics_yolo`](https://pub.dev/packages/ultralytics_yolo) 0.6.16 with an int8 COCO detector and a FoodSeg103 segmenter |
 | Package labels | `google_mlkit_text_recognition` 0.17.1 with the bundled Latin model |
 | Camera / gallery | `image_picker` 1.2.4 |
@@ -143,8 +146,8 @@ flutter build appbundle --release
 
 Artifacts (current build):
 
-- `build\app\outputs\flutter-apk\app-release.apk` - universal APK, 70,174,290 bytes (66.9 MiB), SHA-256 `CBADE174C4C2921AC1550E14BF61A9E617529D55FF4C835D6AF2F7139396C633`
-- `build\app\outputs\bundle\release\app-release.aab` - Play bundle, 79,811,211 bytes (76.1 MiB), SHA-256 `9E6D9E83B7EC9A5B5C402F350E62FD7B162D414EF4497FD872C176F796A00A5A`
+- `build\app\outputs\flutter-apk\app-release.apk` - universal APK, 70,504,976 bytes (67.2 MiB), SHA-256 `45785915BEE91EFD1BD6CC80622A61CAD161D54B94C142CEEB840B51317DD22C`
+- `build\app\outputs\bundle\release\app-release.aab` - Play bundle, 80,087,455 bytes (76.4 MiB), SHA-256 `EB029CE593971B74B3C2832EAD1F4313C5B8F8594519A87212EDAAD399087B7E`
 
 The AI recipe model is not inside either file. The size comes from the MediaPipe/Flutter AI native libraries for `arm64-v8a` and `armeabi-v7a`, the two bundled food models, and ML Kit's on-device OCR model. The `x86_64` emulator libraries are excluded. Only the Flutter engine and Dart AOT symbol tables remain in the bundle; the larger third-party native symbol files are removed by a Gradle step. Play delivers only the needed pieces from the AAB. For a smaller direct-install APK, use:
 
@@ -160,7 +163,7 @@ See [RELEASE.md](RELEASE.md) for the full checklist, manifest checks, and Play C
 lib/
   main.dart                 App start, global error handling, detector startup
   strings.dart              Every word the child sees
-  theme.dart                Light and dark Material 3 themes
+  theme.dart                Poppins type scale and light/dark Material 3 themes
   data/
     ingredients.dart        Food catalog, COCO names, and FoodSeg103 names
     recipe.dart             Recipe model
@@ -180,7 +183,14 @@ lib/
     recipe_screen.dart      Step 3b: live AI or Quick chef recipe
     model_download_screen.dart  One-time download and progress
     settings_screen.dart    Chef brain status, delete, About
-  widgets/                  Reusable buttons, chips, dialogs, photo boxes
+  widgets/
+    custom_text.dart        Shared text widget and MediaQuery text scaling
+    app_sizes.dart          Shared spacing, icon, emoji, and radius values
+    app_card.dart           Shared card and label/value row
+    app_page.dart           Shared app bar, safe area, and scroll body
+    big_action_button.dart  Large child-friendly action button
+    ...                     Chips, dialogs, photo boxes, and feedback cards
+assets/google_fonts/        Bundled Poppins files and OFL license
 assets/models/
   food_detector.tflite      Bundled int8 COCO detector (not the AI chef)
   food_detector_foodseg.tflite  Bundled FoodSeg103 segmenter
@@ -206,9 +216,9 @@ All visible text belongs in `lib/strings.dart`.
 - Detection works best with good light and an open fridge door. Boxes show only the first box for each food. A careful scan can take up to two minutes on a slow device.
 - Dark, clear bottles, and some packages may be missed or labeled "Juice or Drink". Labels must be readable and in Latin script (English or French words are mapped best).
 - AI recipes are generated, not reviewed one by one. The prompt restricts ingredients and gives safety rules, but a grown-up should still check allergies and cooking steps.
-- The universal release APK is 70,174,290 bytes (66.9 MiB) and the AAB is 79,811,211 bytes (76.1 MiB). They contain MediaPipe and ML Kit native libraries for `arm64-v8a` and `armeabi-v7a`, plus the two food models. `x86_64` emulator/Chromebook libraries are intentionally excluded, so use an ARM phone or tablet for release testing. The AAB is below the 90 MB target.
+- The universal release APK is 70,504,976 bytes (67.2 MiB) and the AAB is 80,087,455 bytes (76.4 MiB). They contain MediaPipe and ML Kit native libraries for `arm64-v8a` and `armeabi-v7a`, the two food models, and the six bundled Poppins weights. `x86_64` emulator/Chromebook libraries are intentionally excluded, so use an ARM phone or tablet for release testing. The AAB is below the 90 MB target.
 - On Android 13 and newer, Android's notification-permission pop-up can briefly cover the app. The download screen now explains this before the download starts and offers **Not now**; the download only starts after that choice. The Android 12 tablet cannot show the Android 13 permission dialog, so the exact pop-up was verified through the widget tests and the permission flow, not on a physical Android 13 phone.
-- The dual-model scan, package-label reader, 521 MB download, progress notification, no-internet card, retry, live MediaPipe generation, and the new plain-text streaming cleanup were verified on a Samsung SM-T865 tablet. The 1.0.1+2 chef-brain download was re-tested end to end on that tablet: delete, download from 0% to 100%, foreground notification, ready screen, and no crash. The tablet runs Android 12, so the Android 14+ foreground-service declaration still needs a check on a newer phone. A low-end phone, TalkBack, and the system-camera path also still need a final device test.
+- The dual-model scan, package-label reader, 521 MB download, progress notification, no-internet card, retry, live MediaPipe generation, and the plain-text streaming cleanup were verified on a Samsung SM-T865 tablet. The 1.0.1+2 chef-brain download was re-tested end to end on that tablet: delete, download from 0% to 100%, foreground notification, ready screen, and no crash. The 1.0.2+3 UI build passes analyze, all 60 widget tests, bundletool validation, and APK signature checks; it still needs a device smoke test when the tablet is reconnected. The tablet runs Android 12, so the Android 14+ foreground-service declaration still needs a check on a newer phone. A low-end phone, TalkBack, and the system-camera path also still need a final device test.
 - The Ultralytics plugin still applies the Kotlin Gradle Plugin, so Flutter prints a future-compatibility warning at build time. Watch the plugin for an update.
 - The recipe set is entertainment, not medical or allergy advice. Always check ingredients for allergies.
 
@@ -221,6 +231,8 @@ No personal data is collected. Internet is used only once to download the AI rec
 This project is released under the **GNU Affero General Public License v3.0**. See [LICENSE](LICENSE).
 
 The bundled Ultralytics YOLO model and the `ultralytics_yolo` plugin are also AGPL-3.0. If you publish a modified version, keep the source available under the same license.
+
+The bundled Poppins font is licensed under the **SIL Open Font License 1.1**. The full license text is included at `assets/google_fonts/OFL.txt`.
 
 The Qwen2.5 0.5B Instruct model is licensed under **Apache License 2.0**, which allows commercial use. See the model page and license link above. The app downloads the model from Hugging Face; it is not part of this repository or the APK/AAB.
 

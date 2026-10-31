@@ -64,8 +64,8 @@ This file is my checklist. I update it after every phase.
 ## Phase 8 - Test, build and docs
 - [x] flutter analyze clean
 - [x] flutter test passing (60 tests)
-- [x] Release APK built (70,174,290 bytes / 66.9 MiB)
-- [x] Release AAB built (79,811,211 bytes / 76.1 MiB, below the 90 MB target)
+- [x] Release APK built (70,504,976 bytes / 67.2 MiB)
+- [x] Release AAB built (80,087,455 bytes / 76.4 MiB, below the 90 MB target)
 - [x] Split APKs built for smaller test installs
 - [x] Merged manifest checked
 - [x] README, RELEASE, STORE_LISTING, PRIVACY_POLICY, and PROGRESS docs updated
@@ -76,7 +76,18 @@ This file is my checklist. I update it after every phase.
 - [x] Live recipe text cleans literal `\n`, HTML tags, and half-finished model tokens
 - [x] 1.0.1+2 APK installed on the SM-T865; delete-and-download re-tested from 0% to 100% with notification and ready screen
 - [ ] Low-end phone, TalkBack, Android 13+ permission pop-up, and system-camera path tested
-- [ ] All work committed and pushed
+- [x] All work committed and pushed
+
+## Phase 9 - UI consistency refactor
+- [x] Add `google_fonts` and bundle Poppins locally with runtime fetching disabled
+- [x] Move the whole type scale into `theme.dart`
+- [x] Add one `CustomText` widget that reads text size from `MediaQuery`
+- [x] Replace every native `Text` and `SelectableText` in the UI
+- [x] Add shared `AppCard`, `AppInfoRow`, `AppPage`, `AppScrollBody`, and `AppEmoji` helpers
+- [x] Centralize spacing, icon, emoji, and corner-radius values in `app_sizes.dart`
+- [x] Remove duplicate model-info rows and repeated page/card decoration
+- [x] Keep all 60 tests, analyze, and 1.5x text layouts passing
+- [x] Rebuild 1.0.2+3 APK/AAB, validate the bundle, and check the APK signature
 
 ## Current status
 
@@ -85,14 +96,14 @@ This file is my checklist. I update it after every phase.
 | Flutter / Dart | 3.44.6 / 3.12.2 |
 | Analyze | No issues |
 | Tests | 60 passed |
-| Release APK (universal) | `build/app/outputs/flutter-apk/app-release.apk` (70,174,290 bytes / 66.9 MiB) |
-| Release AAB | `build/app/outputs/bundle/release/app-release.aab` (79,811,211 bytes / 76.1 MiB) |
+| Release APK (universal) | `build/app/outputs/flutter-apk/app-release.apk` (70,504,976 bytes / 67.2 MiB) |
+| Release AAB | `build/app/outputs/bundle/release/app-release.aab` (80,087,455 bytes / 76.4 MiB) |
 | Release permissions | INTERNET (one-time model download), ACCESS_NETWORK_STATE, WAKE_LOCK, FOREGROUND_SERVICE, FOREGROUND_SERVICE_DATA_SYNC, POST_NOTIFICATIONS, private receiver permission |
 | Release signer | Upload key shared with invoice_management_system, CN=Sarthak, OU=PathKosh |
 | Food models | COCO detector 2.9 MB + FoodSeg103 segmenter 14.6 MB, bundled |
 | Package labels | ML Kit Latin OCR, bundled, on-device |
 | AI model | Qwen2.5 0.5B Instruct, 521 MiB, Apache-2.0, downloaded once, not bundled |
-| Device check | Samsung SM-T865 (Android 12): dual-model scan, OCR, live AI recipe generation, and the 1.0.1+2 delete-and-redownload flow verified end to end (0% to 100%, foreground notification, ready screen, no crash). The size-optimized ARM-only build was validated with bundletool and its APK signature was checked, but the tablet was disconnected before a smoke test; low-end phone, TalkBack, Android 13+ permission pop-up, Android 14+ foreground-service fix, and system camera still pending |
+| Device check | Samsung SM-T865 (Android 12): dual-model scan, OCR, live AI recipe generation, and the 1.0.1+2 delete-and-redownload flow verified end to end (0% to 100%, foreground notification, ready screen, no crash). The 1.0.2+3 UI build was validated with bundletool, its APK signature was checked, and all 60 widget tests pass, but the tablet was disconnected before a smoke test; low-end phone, TalkBack, Android 13+ permission pop-up, Android 14+ foreground-service fix, and system camera still pending |
 
 ## Decisions I made along the way
 
@@ -110,7 +121,9 @@ This file is my checklist. I update it after every phase.
 - **Download:** A DNS preflight gives an instant no-internet card, the plugin retries only 3 times, and the transfer runs in a foreground service with a progress notification. The manifest declares WorkManager's `SystemForegroundService` with `foregroundServiceType="dataSync"`, which Android 14+ requires; without it the app closes as soon as the notification starts. A 60-second first-progress guard plus a 30-second engine startup guard turn a silent worker into a friendly error with a working **Try again** button. On Android 13+ the app explains notification permission before starting, then shows Android's pop-up; Allow uses the foreground notification, Not now downloads without one and shows a keep-screen-open hint. This avoids the downloader making a hidden permission request in the middle of "starting".
 - **Mapping:** COCO `bottle` becomes **Juice or Drink**. Cups, bowls, utensils, people, and appliances are ignored so the food list stays clean.
 - **Safety:** Every recipe asks for a grown-up with knives and heat. The generated recipe is entertainment, not medical or allergy advice.
-- **UI:** Plain `StatefulWidget` + `setState`, one screen per file, every string in `strings.dart`, and shared widgets in `lib/widgets/`.
+- **UI:** Plain `StatefulWidget` + `setState`, one screen per file, every string in `strings.dart`, and shared widgets in `lib/widgets/`. All text goes through `CustomText`; cards, page frames, info rows, and emoji use `AppCard`, `AppPage`, `AppScrollBody`, `AppInfoRow`, and `AppEmoji`.
+- **Font:** Poppins comes from `google_fonts` but every weight is bundled in `assets/google_fonts`. `GoogleFonts.config.allowRuntimeFetching = false` keeps the app fully offline. `CustomText` applies the `MediaQuery` text scale itself and turns off Flutter's second scaling pass, so the child's 1.5x setting is applied exactly once.
+- **Sizing:** `AppSizes`, `AppSpacing`, and `AppRadius` hold the shared touch-target, icon, emoji, gap, and corner values. Font sizes live only in `theme.dart`.
 - **Layout:** One breakpoint (`600 dp`) for wide layouts. Tests cover 360x640, 640x360, and 1024x1366 at 1.5x text.
 - **Icons:** The fridge icon is drawn as a vector for the adaptive/monochrome icon and rendered to PNG for Android 7 devices; no icon-generation package was added.
 - **Splash:** A native Android splash plus a short in-app splash while the detector loads; no extra package.

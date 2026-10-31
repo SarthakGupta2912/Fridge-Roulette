@@ -7,7 +7,7 @@ This checklist takes Fridge Roulette from source to the Google Play Console.
 | Item | Value |
 | --- | --- |
 | Application id | `com.sarthakgupta.fridgeroulette` |
-| Version | `1.0.1` (versionCode `2`, from `pubspec.yaml`) |
+| Version | `1.0.2` (versionCode `3`, from `pubspec.yaml`) |
 | Minimum Android | 7.0 / API 24 |
 | Target Android | API 36 |
 | Compile SDK | 36 |
@@ -15,6 +15,7 @@ This checklist takes Fridge Roulette from source to the Google Play Console.
 | Signing | `android/key.properties` + `android/app/upload-keystore.jks` (both ignored) |
 | Minify / shrink | R8 and resource shrinking enabled for release |
 | Runtime permissions | `INTERNET`, `ACCESS_NETWORK_STATE`, `WAKE_LOCK`, `FOREGROUND_SERVICE`, `FOREGROUND_SERVICE_DATA_SYNC`, `POST_NOTIFICATIONS`, plus the app's private dynamic-receiver permission |
+| Font | Poppins via `google_fonts`, six weights bundled in `assets/google_fonts` (runtime fetching disabled) |
 | Food models | COCO detector (2.9 MB) + FoodSeg103 segmenter (14.6 MB), both bundled |
 | Package labels | ML Kit Latin OCR, bundled, on-device |
 | AI model | Qwen2.5 0.5B Instruct, about 521 MiB, downloaded once, not bundled |
@@ -50,10 +51,10 @@ If `key.properties` is missing, the Gradle file falls back to the debug key so C
 Update the version in `pubspec.yaml`:
 
 ```yaml
-version: 1.0.1+2
+version: 1.0.2+3
 ```
 
-`1.0.1` is the version name shown to users. `+2` is the version code and must be higher than every previous upload. If this is truly the first Play upload, `1.0.0+1` is fine. Also update `AppStrings.appVersion` in `lib/strings.dart`.
+`1.0.2` is the version name shown to users. `+3` is the version code and must be higher than every previous upload. If this is truly the first Play upload, `1.0.0+1` is fine. Also update `AppStrings.appVersion` in `lib/strings.dart`.
 
 ## 3. Run the checks
 
@@ -84,18 +85,18 @@ Outputs:
 
 | Artifact | Path | Size (current build) |
 | --- | --- | --- |
-| Release APK (universal) | `build\app\outputs\flutter-apk\app-release.apk` | 70,174,290 bytes (66.9 MiB) |
-| Release AAB | `build\app\outputs\bundle\release\app-release.aab` | 79,811,211 bytes (76.1 MiB) |
+| Release APK (universal) | `build\app\outputs\flutter-apk\app-release.apk` | 70,504,976 bytes (67.2 MiB) |
+| Release AAB | `build\app\outputs\bundle\release\app-release.aab` | 80,087,455 bytes (76.4 MiB) |
 
-The AI recipe model is **not** in either file. The size comes from the MediaPipe/Flutter AI native libraries for `arm64-v8a` and `armeabi-v7a`, the two bundled food models, and ML Kit's bundled Latin OCR model. The AAB lets Play deliver only the needed pieces. The universal APK contains both ARM ABIs and is below the 90 MB target.
+The AI recipe model is **not** in either file. The size comes from the MediaPipe/Flutter AI native libraries for `arm64-v8a` and `armeabi-v7a`, the two bundled food models, ML Kit's bundled Latin OCR model, and the six bundled Poppins font files. The AAB lets Play deliver only the needed pieces. The universal APK contains both ARM ABIs and is below the 90 MB target.
 
 The `x86_64` libraries are excluded because they are only useful for desktop emulators and were the largest ABI. The AAB keeps only the Flutter engine and Dart AOT symbol tables; the larger third-party native symbol files are removed after extraction by a Gradle step. That keeps Flutter's `build appbundle` post-check happy without pushing the bundle over 90 MB. Both 64-bit and 32-bit ARM phones and tablets remain supported.
 
 SHA-256 checksums for this build:
 
 ```text
-app-release.apk  CBADE174C4C2921AC1550E14BF61A9E617529D55FF4C835D6AF2F7139396C633
-app-release.aab  9E6D9E83B7EC9A5B5C402F350E62FD7B162D414EF4497FD872C176F796A00A5A
+app-release.apk  45785915BEE91EFD1BD6CC80622A61CAD161D54B94C142CEEB840B51317DD22C
+app-release.aab  EB029CE593971B74B3C2832EAD1F4313C5B8F8594519A87212EDAAD399087B7E
 ```
 
 If you rebuild, the checksums change. Recompute with:
@@ -156,7 +157,7 @@ LiteRT and MediaPipe run model methods through JNI and reflection. WorkManager o
 Check:
 
 - package name `com.sarthakgupta.fridgeroulette`
-- version name `1.0.1`, version code `2`
+- version name `1.0.2`, version code `3`
 - `sdkVersion:'24'`, `targetSdkVersion:'36'`
 - label `Fridge Roulette`
 - `uses-feature-not-required` for camera and autofocus

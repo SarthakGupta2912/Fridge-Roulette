@@ -52,7 +52,7 @@ class AppStrings {
   static const String aboutBody =
       'Fridge Roulette is a kid-friendly cooking game. No account, no ads, '
       'no analytics. The internet is used only once to download the AI chef.';
-  static const String appVersion = 'Version 1.0.1';
+  static const String appVersion = 'Version 1.0.2';
   static const String privacyPromise =
       'No personal data is collected. Your photos and food list stay on this '
       'phone.';

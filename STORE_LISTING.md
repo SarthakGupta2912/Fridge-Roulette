@@ -135,6 +135,17 @@ The app is designed for children around 6-12 and their families.
 
 ## Release notes
 
+### 1.0.2 (versionCode 3)
+
+```text
+Friendly design update.
+* Poppins font everywhere, bundled in the app for offline use
+* Text now follows the child's system text-size setting
+* More consistent buttons, cards, icons, and spacing on phones and tablets
+* Simpler shared widgets make the screens easier to maintain
+* Same private, on-device cooking fun: no account, ads, or analytics
+```
+
 ### 1.0.1 (versionCode 2)
 
 ```text
